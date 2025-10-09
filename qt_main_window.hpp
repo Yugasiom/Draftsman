@@ -10,7 +10,7 @@ QT_BEGIN_NAMESPACE
 
 namespace Ui
 {
-    class QtMainWindow;
+    class Draftsman;
 }
 
 QT_END_NAMESPACE
@@ -25,7 +25,7 @@ class QtMainWindow : public QMainWindow
         ~QtMainWindow();
 
     private:
-        Ui::QtMainWindow *ui;
+        Ui::Draftsman *ui;
 };
 
 

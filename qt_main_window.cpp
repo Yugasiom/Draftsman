@@ -3,7 +3,7 @@
 
 
 QtMainWindow::QtMainWindow(QWidget *parent) :
-              QMainWindow(parent), ui(new Ui::QtMainWindow)
+              QMainWindow(parent), ui(new Ui::Draftsman)
 {
     ui->setupUi(this);
 }
