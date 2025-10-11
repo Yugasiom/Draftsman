@@ -57,8 +57,6 @@ compile_commands.json
 
 # QtCreator Local Machine Specific Files For Imported Projects
 *creator.user*
-
-
 *_qmlcache.qrc
 
 
@@ -73,3 +71,4 @@ LICENSE
 *.cbp
 *.depend
 *.layout
+
