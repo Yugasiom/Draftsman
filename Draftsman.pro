@@ -9,15 +9,15 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
-    qt_main_window.cpp
+    source/form/creator/creator_source.cpp
 
 
 HEADERS += \
-    qt_main_window.hpp
+    source/form/creator/creator_header.hpp
 
 
 FORMS += \
-    qt_main_window.ui
+    source/form/creator/creator_window.ui
 
 
 qnx: target.path = /tmp/$${TARGET}/bin

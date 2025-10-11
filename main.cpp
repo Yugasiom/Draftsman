@@ -1,15 +1,18 @@
 #include <cstdint>
+
 #include <QApplication>
 
-#include "qt_main_window.hpp"
+#include "source/form/creator/creator_header.hpp"
 
 
-int main(int argc, char *argv[])
+int main(int32_t argc, char *argv[])
 {
-    QApplication a(argc, argv);
-    QtMainWindow w;
-    w.show();
+    QApplication app(argc, argv);
+    Creator window;
 
 
-    return a.exec();
+    window.show();
+
+
+    return app.exec();
 }
