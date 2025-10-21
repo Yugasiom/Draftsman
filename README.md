@@ -10,3 +10,8 @@
 
 <img width="822" height="560" alt="pl3" src="https://github.com/user-attachments/assets/e2e81a19-ef87-4125-8962-d3690f84a491" />
 
+
+This project uses the MesloLGS Nerd Font,
+distributed under the MIT license.
+© Authors of Nerd Fonts, https://www.nerdfonts.com
+
