@@ -9,10 +9,12 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    source/custom_object/resizable_plain_text_edit/resizable_plain_text_edit.cpp \
     source/form/creator/creator_source.cpp
 
 
 HEADERS += \
+    source/custom_object/resizable_plain_text_edit/resizable_plain_text_edit.hpp \
     source/form/creator/creator_header.hpp
 
 

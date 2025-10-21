@@ -21,7 +21,7 @@ class Creator : public QMainWindow
     Q_OBJECT
 
     public:
-        explicit Creator(QWidget * = nullptr);
+        explicit Creator(QWidget* =nullptr);
         ~Creator();
 
     private:
