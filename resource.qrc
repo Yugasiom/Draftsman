@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/fonts">
+    <file>./source/font/MesloLGSNerdFont-Regular.ttf</file>
+  </qresource>
+</RCC>
+

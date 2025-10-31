@@ -7,12 +7,15 @@
 
 #include <QFont>
 #include <QTimer>
+#include <QPainter>
 #include <QTextEdit>
 #include <QKeyEvent>
 #include <QTextBlock>
+#include <QScrollBar>
 #include <QTextCursor>
 #include <QResizeEvent>
 #include <QTextCharFormat>
+#include <QAbstractTextDocumentLayout>
 
 
 class ResizablePlainTextEdit : public QTextEdit
@@ -21,23 +24,32 @@ class ResizablePlainTextEdit : public QTextEdit
 
 
     public:
-        explicit ResizablePlainTextEdit(QWidget* =nullptr);
+        explicit ResizablePlainTextEdit(      QWidget*       = nullptr);
 
     protected:
-        void     resizeEvent       (      QResizeEvent *) override;
-        void     focusInEvent      (      QFocusEvent  *) override;
-        void     keyPressEvent     (      QKeyEvent    *) override;
-        void     insertFromMimeData(const QMimeData    *) override;
+        void     resizeEvent           (      QResizeEvent *)  override;
+        void     focusInEvent          (      QFocusEvent  *)  override;
+        void     keyPressEvent         (      QKeyEvent    *)  override;
+        void     insertFromMimeData    (const QMimeData    *)  override;
 
 
     private slots:
-        void     handle_text_changed();
+        void     handle_text_changed   ();
 
 
     private:
-        void     apply_font_format();
+        QWidget *lna                   = nullptr;
+
+
+
+        uint16_t line_number_area_width()                      const;
+        void     paint_line_number_area(QPaintEvent* );
+        bool     eventFilter           (QObject *, QEvent *)   override;
+
+
+        void     apply_font_format     ();
         void     update_all_text_format(uint16_t);
-        uint16_t calculate_font_size()                      const;
+        uint16_t calculate_font_size   ()                      const;
 };
 
 

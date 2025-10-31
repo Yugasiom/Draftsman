@@ -369,7 +369,7 @@
           <number>0</number>
          </property>
          <item row="0" column="1">
-          <widget class="QLabel" name="Level">
+          <widget class="RPTLabel" name="Level">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -419,7 +419,7 @@
             <number>0</number>
            </property>
            <property name="text">
-            <string notr="true">TextLabel</string>
+            <string notr="true">Собственный уровень</string>
            </property>
            <property name="textFormat">
             <enum>Qt::TextFormat::RichText</enum>
@@ -510,63 +510,24 @@
          <property name="spacing">
           <number>0</number>
          </property>
-         <item row="0" column="0">
-          <widget class="QRadioButton" name="radioButton_3">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="0" column="8">
+          <spacer name="HS3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
-           <property name="minimumSize">
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
             <size>
-             <width>98</width>
-             <height>21</height>
+             <width>17</width>
+             <height>0</height>
             </size>
            </property>
-           <property name="maximumSize">
-            <size>
-             <width>1280</width>
-             <height>60</height>
-            </size>
-           </property>
-           <property name="cursor">
-            <cursorShape>CrossCursor</cursorShape>
-           </property>
-           <property name="toolTip">
-            <string notr="true"/>
-           </property>
-           <property name="statusTip">
-            <string notr="true"/>
-           </property>
-           <property name="whatsThis">
-            <string notr="true"/>
-           </property>
-           <property name="accessibleName">
-            <string notr="true"/>
-           </property>
-           <property name="accessibleDescription">
-            <string notr="true"/>
-           </property>
-           <property name="accessibleIdentifier">
-            <string notr="true"/>
-           </property>
-           <property name="text">
-            <string notr="true">text</string>
-           </property>
-           <property name="shortcut">
-            <string notr="true"/>
-           </property>
-           <property name="autoRepeatDelay">
-            <number>0</number>
-           </property>
-           <property name="autoRepeatInterval">
-            <number>0</number>
-           </property>
-          </widget>
+          </spacer>
          </item>
          <item row="0" column="1">
-          <widget class="QRadioButton" name="radioButton_2">
+          <widget class="RPTERadioButton" name="Field">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -575,13 +536,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>98</width>
+             <width>49</width>
              <height>21</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>1280</width>
+             <width>120</width>
              <height>60</height>
             </size>
            </property>
@@ -607,7 +568,7 @@
             <string notr="true"/>
            </property>
            <property name="text">
-            <string notr="true">text</string>
+            <string notr="true">Field</string>
            </property>
            <property name="shortcut">
             <string notr="true"/>
@@ -620,8 +581,24 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="3">
-          <widget class="QSpinBox" name="spinBox">
+         <item row="0" column="6">
+          <spacer name="HS2">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>17</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="7">
+          <widget class="RPTESpinBox" name="Height">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -630,13 +607,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>98</width>
+             <width>49</width>
              <height>21</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>1280</width>
+             <width>120</width>
              <height>60</height>
             </size>
            </property>
@@ -702,18 +679,34 @@
             <string notr="true"/>
            </property>
            <property name="prefix">
-            <string notr="true"/>
+            <string notr="true">0</string>
            </property>
            <property name="maximum">
-            <number>200</number>
+            <number>9</number>
            </property>
            <property name="value">
             <number>5</number>
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QRadioButton" name="radioButton">
+         <item row="0" column="0">
+          <spacer name="HS">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>17</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="5">
+          <widget class="RPTERadioButton" name="Player">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -722,13 +715,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>98</width>
+             <width>49</width>
              <height>21</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>1280</width>
+             <width>120</width>
              <height>60</height>
             </size>
            </property>
@@ -754,7 +747,7 @@
             <string notr="true"/>
            </property>
            <property name="text">
-            <string notr="true">text</string>
+            <string notr="true">Player</string>
            </property>
            <property name="shortcut">
             <string notr="true"/>
@@ -767,8 +760,8 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="4">
-          <widget class="QSpinBox" name="spinBox_2">
+         <item row="0" column="9">
+          <widget class="RPTESpinBox" name="Width">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -777,13 +770,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>98</width>
+             <width>49</width>
              <height>21</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>1280</width>
+             <width>120</width>
              <height>60</height>
             </size>
            </property>
@@ -845,13 +838,106 @@
            <property name="showGroupSeparator" stdset="0">
             <bool>false</bool>
            </property>
+           <property name="suffix">
+            <string notr="true"/>
+           </property>
+           <property name="prefix">
+            <string notr="true">0</string>
+           </property>
            <property name="maximum">
-            <number>200</number>
+            <number>9</number>
            </property>
            <property name="value">
             <number>5</number>
            </property>
           </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="RPTERadioButton" name="Flag">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>49</width>
+             <height>21</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>120</width>
+             <height>60</height>
+            </size>
+           </property>
+           <property name="cursor">
+            <cursorShape>CrossCursor</cursorShape>
+           </property>
+           <property name="toolTip">
+            <string notr="true"/>
+           </property>
+           <property name="statusTip">
+            <string notr="true"/>
+           </property>
+           <property name="whatsThis">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleName">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleDescription">
+            <string notr="true"/>
+           </property>
+           <property name="accessibleIdentifier">
+            <string notr="true"/>
+           </property>
+           <property name="text">
+            <string notr="true">Flag</string>
+           </property>
+           <property name="shortcut">
+            <string notr="true"/>
+           </property>
+           <property name="autoRepeatDelay">
+            <number>0</number>
+           </property>
+           <property name="autoRepeatInterval">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <spacer name="HS0">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>17</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="4">
+          <spacer name="HS1">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>17</width>
+             <height>0</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>
@@ -1136,7 +1222,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <number>0</number>
          </property>
          <item row="0" column="0">
-          <widget class="QPushButton" name="pushButton">
+          <widget class="RPTEPushButton" name="Play">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -1188,6 +1274,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <property name="icon">
             <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
            </property>
+           <property name="iconSize">
+            <size>
+             <width>32</width>
+             <height>32</height>
+            </size>
+           </property>
            <property name="shortcut">
             <string notr="true"/>
            </property>
@@ -1221,6 +1313,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <class>ResizablePlainTextEdit</class>
    <extends>QTextEdit</extends>
    <header>./source/custom_object/resizable_plain_text_edit/resizable_plain_text_edit.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>RPTERadioButton</class>
+   <extends>QRadioButton</extends>
+   <header>./source/custom_object/rpte_radio_button/rpte_radio_button.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>RPTESpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>./source/custom_object/rpte_spin_box/rpte_spin_box.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>RPTLabel</class>
+   <extends>QLabel</extends>
+   <header>./source/custom_object/rpt_label/rpt_label.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>RPTEPushButton</class>
+   <extends>QPushButton</extends>
+   <header>./source/custom_object/rpte_push_button/rpte_push_button.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>
