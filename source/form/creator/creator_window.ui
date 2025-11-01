@@ -1135,6 +1135,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <property name="cursorWidth">
             <number>1</number>
            </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextInteractionFlag::TextEditorInteraction</set>
+           </property>
            <property name="placeholderText">
             <string notr="true"/>
            </property>
