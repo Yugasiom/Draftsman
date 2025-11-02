@@ -20,12 +20,13 @@ class Creator : public QMainWindow
 {
     Q_OBJECT
 
-    public:
-        explicit Creator(QWidget* =nullptr);
-        ~Creator();
 
     private:
         Ui::Draftsman *ui;
+
+    public:
+        explicit       Creator(QWidget* =nullptr);
+                      ~Creator();
 };
 
 

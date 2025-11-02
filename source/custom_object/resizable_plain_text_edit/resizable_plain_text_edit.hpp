@@ -5,6 +5,8 @@
 
 #include <cstdint>
 
+#include <threads.h>
+
 #include <QFont>
 #include <QTimer>
 #include <QPainter>
@@ -26,23 +28,20 @@
 #include <QAbstractTextDocumentLayout>
 
 
+#define WHITE  QColor(255, 255, 255)
+#define GREY   QColor(150, 150, 150)
+#define RED    QColor(255, 000, 100)
+#define GREEN  QColor(000, 255, 035)
+#define BLUE   QColor(000, 175, 255)
+#define YELLOW QColor(235, 220, 160)
+
+
+extern thread_local const QStringList o;
+
+
 class ResizablePlainTextEdit : public QTextEdit
 {
     Q_OBJECT
-
-
-    public:
-        explicit ResizablePlainTextEdit(      QWidget*       = nullptr);
-
-    protected:
-        void     resizeEvent           (      QResizeEvent *)  override;
-        void     focusInEvent          (      QFocusEvent  *)  override;
-        void     keyPressEvent         (      QKeyEvent    *)  override;
-        void     insertFromMimeData    (const QMimeData    *)  override;
-
-
-    private slots:
-        void     handle_text_changed   ();
 
 
     private:
@@ -58,37 +57,31 @@ class ResizablePlainTextEdit : public QTextEdit
         void     apply_font_format     ();
         void     update_all_text_format(uint16_t);
         uint16_t calculate_font_size   ()                      const;
+
+    private slots:
+        void     handle_text_changed   ();
+
+    protected:
+        void     resizeEvent           (      QResizeEvent *)  override;
+        void     focusInEvent          (      QFocusEvent  *)  override;
+        void     keyPressEvent         (      QKeyEvent    *)  override;
+        void     insertFromMimeData    (const QMimeData    *)  override;
+
+    public:
+        explicit ResizablePlainTextEdit(      QWidget*       = nullptr);
 };
 
 class DraftsmanHighlighter : public QSyntaxHighlighter
 {
-    public:
-        DraftsmanHighlighter(QTextDocument *p) : QSyntaxHighlighter(p)
+    private:
+        struct Rule
         {
-            QTextCharFormat f;
+            QRegularExpression p;
+            QTextCharFormat    f;
+        };
 
-            f.setForeground(QColor(030, 215, 000));
-            rs.append({ QRegularExpression(R"(вправо|влево|вверх|вниз|красить)",
-                                           QRegularExpression::CaseInsensitiveOption), f });
-
-            f.setForeground(QColor(255, 000, 100));
-            rs.append({ QRegularExpression(R"(цикл|если|то)",
-                                           QRegularExpression::CaseInsensitiveOption), f });
-
-            f.setForeground(QColor(000, 130, 255));
-            rs.append({ QRegularExpression(R"(\b\d+\b)",
-                                           QRegularExpression::CaseInsensitiveOption), f });
-
-            f.setForeground(QColor(150, 150, 150));
-            rs.append({ QRegularExpression(R"(:|точка)",
-                                          QRegularExpression::CaseInsensitiveOption), f });
-
-            f.setForeground(QColor(235, 220, 160));
-            rs.append({ QRegularExpression(R"(\|.*\|)",
-                                           QRegularExpression::CaseInsensitiveOption), f });
-
-            defaultFormat.setForeground(Qt::white);
-    }
+        QVector<Rule> rs;
+        QTextCharFormat defaultFormat;
 
     protected:
         void highlightBlock(const QString &text) override
@@ -112,15 +105,33 @@ class DraftsmanHighlighter : public QSyntaxHighlighter
             }
         }
 
-    private:
-        struct Rule
+    public:
+        DraftsmanHighlighter(QTextDocument *p) : QSyntaxHighlighter(p)
         {
-            QRegularExpression p;
-            QTextCharFormat    f;
-        };
+            QTextCharFormat f;
 
-        QVector<Rule> rs;
-        QTextCharFormat defaultFormat;
+            f.setForeground(GREEN);
+            rs.append({ QRegularExpression(R"(вправо|влево|вверх|вниз|красить)",
+                                           QRegularExpression::CaseInsensitiveOption), f });
+
+            f.setForeground(RED);
+            rs.append({ QRegularExpression(R"(цикл|если|то)",
+                                           QRegularExpression::CaseInsensitiveOption), f });
+
+            f.setForeground(BLUE);
+            rs.append({ QRegularExpression(R"(\b\d+\b)",
+                                           QRegularExpression::CaseInsensitiveOption), f });
+
+            f.setForeground(GREY);
+            rs.append({ QRegularExpression(R"(точка)",
+                                          QRegularExpression::CaseInsensitiveOption), f });
+
+            f.setForeground(YELLOW);
+            rs.append({ QRegularExpression(R"(\((.*?)\))",
+                                           QRegularExpression::CaseInsensitiveOption), f });
+
+            defaultFormat.setForeground(WHITE);
+        }
 };
 
 

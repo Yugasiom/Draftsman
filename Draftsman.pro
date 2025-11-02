@@ -9,6 +9,7 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    source/custom_object/game_field_widget/game_field_widget.cpp \
     source/custom_object/resizable_plain_text_edit/resizable_plain_text_edit.cpp \
     source/custom_object/rpt_label/rpt_label.cpp \
     source/custom_object/rpte_push_button/rpte_push_button.cpp \
@@ -18,6 +19,7 @@ SOURCES += \
 
 
 HEADERS += \
+    source/custom_object/game_field_widget/game_field_widget.hpp \
     source/custom_object/resizable_plain_text_edit/resizable_plain_text_edit.hpp \
     source/custom_object/rpt_label/rpt_label.hpp \
     source/custom_object/rpte_push_button/rpte_push_button.hpp \

@@ -2,6 +2,14 @@
 
 
 
+thread_local const QStringList o = {
+    "если"   , "то"   , "цикл" , "точка",
+    "вправо" , "влево", "вверх", "вниз" ,
+    "красить"
+};
+
+
+
 ResizablePlainTextEdit::ResizablePlainTextEdit(QWidget *p) :
                                                QTextEdit(p)
 {
@@ -79,6 +87,24 @@ QString normalize_case(const QString &w)
 
 void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
 {
+    if(e->key() == Qt::Key_Tab) {
+        QTextCursor c = textCursor();
+        c.insertText("    ");
+        setTextCursor(c);
+
+
+        return;
+    }
+
+    if(e->modifiers() & Qt::ShiftModifier && e->key() == Qt::Key_Return) {
+        QKeyEvent fe(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QTextEdit::keyPressEvent(&fe);
+
+
+        return;
+    }
+
+
     if(e->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) {
         QTextEdit::keyPressEvent(e);
 
@@ -97,6 +123,8 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
         return;
     }
 
+
+
     apply_font_format();
     QTextEdit::keyPressEvent(e);
 
@@ -104,12 +132,16 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
     int32_t p = c.position();
 
     c.select(QTextCursor::WordUnderCursor);
-    QString w = c.selectedText();
-    QString f = normalize_case(w);
 
-    c.insertText(f);
-    c.setPosition(p);
-    setTextCursor(c);
+    QString w = c.selectedText();
+    QString f;
+
+    if(o.contains(w.trimmed(), Qt::CaseInsensitive)) {
+        f = normalize_case(w);
+        c.insertText(f);
+        c.setPosition(p);
+        setTextCursor(c);
+    }
 }
 
 void ResizablePlainTextEdit::apply_font_format()
