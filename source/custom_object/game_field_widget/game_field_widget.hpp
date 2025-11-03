@@ -38,37 +38,37 @@ class GameFieldWidget : public QWidget
 
 
     private:
-        static const int16_t    max_r = 9, max_c = 9;
+        static const int16_t      max_r = 9, max_c = 9;
 
 
 
                      struct Cell
                      {
-                        int32_t ti    = 0;
-                        QColor  c;
+                        int32_t   ti    = 0;
+                        QColor    c;
                      };
 
 
-                     Cell       cells[max_r][max_c];
-                     int16_t    r     = 5, c = 5, ct = 1;
-                     QPoint     h     {-1, -1}  , lc    {-1, -1};
+                     Cell         cells[max_r][max_c];
+                     int16_t      r     = 5, c = 5, ct = 1;
+                     QPoint       h     {-1, -1}  , lc    {-1, -1};
 
 
-                     uint16_t   md    = 0;
+                     uint16_t     md    = 0;
 
-                     void       handle_click     (int16_t, int16_t);
+                     void         handle_click     (int16_t, int16_t);
 
     protected:
-                     void       paintEvent       (QPaintEvent *) override;
-                     void       mouseMoveEvent   (QMouseEvent *) override;
-                     void       mousePressEvent  (QMouseEvent *) override;
-                     void       mouseReleaseEvent(QMouseEvent *) override;
+                     void         paintEvent       (QPaintEvent *) override;
+                     void         mouseMoveEvent   (QMouseEvent *) override;
+                     void         mousePressEvent  (QMouseEvent *) override;
+                     void         mouseReleaseEvent(QMouseEvent *) override;
 
     public:
-        explicit                GameFieldWidget  (QWidget* =nullptr);
+        explicit                  GameFieldWidget  (QWidget* =nullptr);
 
-                     void       set_size         (int16_t, int16_t);
-                     void       set_current_tool (int32_t);
+                     void         set_size         (int16_t, int16_t);
+                     void         set_current_tool (int32_t);
 };
 
 

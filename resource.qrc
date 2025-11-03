@@ -2,5 +2,8 @@
   <qresource prefix="/fonts">
     <file>./source/font/MesloLGSNerdFont-Regular.ttf</file>
   </qresource>
+  <qresource prefix="/icons">
+    <file>player.png</file>
+  </qresource>
 </RCC>
 

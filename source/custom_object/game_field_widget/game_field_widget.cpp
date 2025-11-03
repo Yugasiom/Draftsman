@@ -13,7 +13,6 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
     set_size(r, c);
 }
 
-
 void GameFieldWidget::set_size(int16_t nr, int16_t nc)
 {
     int16_t y, x;
@@ -38,27 +37,54 @@ void GameFieldWidget::set_current_tool(int32_t ti)
 void GameFieldWidget::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing, true);
+
     int16_t y, x , cs = std::min(width()    / c, height() / r),
             ox  = (width()  - cs * c) / 2,
             oy  = (height() - cs * r) / 2;
+
+    uint16_t rad;
 
     for(y = 0; y < r; ++y) {
         for(x = 0; x < c; ++x) {
             QRect re(ox + x * cs, oy + y * cs, cs, cs);
             const Cell &ce = cells[y][x];
 
-            QColor f = ce.c.isValid() ? ce.c : COLOR_DEFAULT;
-            if(h == QPoint(x, y) && !md) {
-                if(ct == 1 || ce.c != COLOR_FIELD) {
-                    f = COLOR_HOVER;
-                }
+            QColor f = ce.c.isValid() ? ce.c : COLOR_DEFAULT, b;
+            if(ce.ti == 3) {
+                f = COLOR_DEFAULT;
             }
 
             p.fillRect(re, f);
-            p.setPen(COLOR_BORDER);
-            p.drawRect(re);
+
+            if(ce.ti == 3) {
+                QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
+
+
+                rad = cs / 5;
+
+
+                p.save();
+
+                b = COLOR_PLAYER.darker(130);
+                p.setPen(QPen(b, 5));
+                p.setBrush(COLOR_PLAYER);
+                p.drawRoundedRect(in, rad, rad);
+
+                p.restore();
+            }
+
+            if(h == QPoint(x, y) && !md) {
+                if(ct == 1 || ce.c != COLOR_FIELD) {
+                    p.fillRect(re, COLOR_HOVER);
+                }
+            }
         }
     }
+
+    QRect ou(ox, oy, cs * c, cs * r);
+    p.setPen(COLOR_BORDER);
+    p.drawRect(ou);
 }
 
 void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
