@@ -22,7 +22,7 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
     for(y = 0; y < max_r; ++y) {
         for(x = 0; x < max_c; ++x) {
             cells[y][x].ti = 0;
-            cells[y][x].c  = COLOR_FIELD;
+            cells[y][x].c  = COLOR_EMPTY;
         }
     }
 
@@ -50,9 +50,9 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             QRect re(ox + x * cs, oy + y * cs, cs, cs);
             const Cell &ce = cells[y][x];
 
-            QColor f = ce.c.isValid() ? ce.c : COLOR_DEFAULT, b;
+            QColor f = ce.c.isValid() ? ce.c : COLOR_FIELD, b;
             if(ce.ti == 3) {
-                f = COLOR_DEFAULT;
+                f = COLOR_FIELD;
             }
 
             p.fillRect(re, f);
@@ -75,7 +75,8 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             }
 
             if(h == QPoint(x, y) && !md) {
-                if(ct == 1 || ce.c != COLOR_FIELD) {
+                if(ct == 1 || ce.c == COLOR_FIELD || ce.c == COLOR_FLAG ||
+                              ce.c == COLOR_ENEMY || ce.c == COLOR_PLAYER) {
                     p.fillRect(re, COLOR_HOVER);
                 }
             }
@@ -133,19 +134,22 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
     Cell &cell = cells[y][x];
     int16_t yy, xx;
 
-    if(ct != 1 && cell.c == COLOR_FIELD) {
+    if(ct != 1 && cell.c == COLOR_EMPTY) {
         return;
     }
 
     if(ct == 1) {
-        if(cell.c == COLOR_FIELD) {
-            cell.c = COLOR_EMPTY;
+        if(cell.c == COLOR_EMPTY) {
+            cell.c = COLOR_FIELD;
             cell.ti = 1;
-        } else if(cell.c == COLOR_EMPTY) {
+        } else if (cell.c == COLOR_FIELD) {
             cell.c = COLOR_ENEMY;
             cell.ti = 2;
-        } else if(cell.c == COLOR_ENEMY || cell.c == COLOR_FLAG) {
+        } else if(cell.c == COLOR_FLAG || cell.c == COLOR_PLAYER) {
             cell.c = COLOR_FIELD;
+            cell.ti = 0;
+        } else if(cell.c == COLOR_ENEMY) {
+            cell.c = COLOR_EMPTY;
             cell.ti = 0;
         }
 
@@ -153,24 +157,35 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         return;
     }
 
-    if(cell.c == COLOR_FIELD)
-        return;
-
-    if(ct == 3 && cell.ti == 3) {
-        return;
-    }
-
     if(ct == 3) {
+        if(cell.c == COLOR_EMPTY || cell.ti == 3) {
+            return;
+        }
+
         for(yy = 0; yy < r; ++yy) {
             for(xx = 0; xx < c; ++xx) {
                 if(cells[yy][xx].ti == 3) {
                     cells[yy][xx].ti = 1;
-                    cells[yy][xx].c  = COLOR_EMPTY;
+                    cells[yy][xx].c = COLOR_FIELD;
                 }
             }
         }
+
+        cell.ti = 3;
+        cell.c = COLOR_PLAYER;
+
+        return;
     }
 
-    cell.ti = ct;
-    cell.c  = (ct == 2) ? COLOR_FLAG : (ct == 3) ? COLOR_PLAYER : COLOR_EMPTY;
+    if(ct == 2) {
+        if(cell.c == COLOR_EMPTY || (cell.ti == 2 && cell.c == COLOR_FLAG)) {
+            return;
+        }
+
+        cell.ti = 2;
+        cell.c = COLOR_FLAG;
+
+
+        return;
+    }
 }

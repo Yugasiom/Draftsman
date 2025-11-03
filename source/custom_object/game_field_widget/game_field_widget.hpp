@@ -22,14 +22,13 @@
 #define ORANGE        QColor(255, 140, 000)
 #define PURPLE        QColor(160, 032, 240)
 
-#define COLOR_EMPTY   WHITE
-#define COLOR_DEFAULT WHITE
-#define COLOR_FIELD   GRAY
+#define COLOR_FIELD   WHITE
+#define COLOR_EMPTY   GRAY
 #define COLOR_BORDER  DARK_GRAY
 #define COLOR_FLAG    RED
 #define COLOR_ENEMY   YELLOW
-#define COLOR_PLAYER  PURPLE
 #define COLOR_HOVER   ORANGE
+#define COLOR_PLAYER  PURPLE
 
 
 class GameFieldWidget : public QWidget
