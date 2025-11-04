@@ -45,30 +45,30 @@ class ResizablePlainTextEdit : public QTextEdit
 
 
     private:
-        QWidget *lna                   = nullptr;
+        QWidget *lna                   = nullptr                      ;
 
 
 
-        uint16_t line_number_area_width()                      const;
-        void     paint_line_number_area(QPaintEvent* );
-        bool     eventFilter           (QObject *, QEvent *)   override;
+        uint16_t line_number_area_width(                   )  const   ;
+        void     paint_line_number_area(QPaintEvent*       )          ;
+        bool     eventFilter           (QObject*, QEvent*  )  override;
 
 
-        void     apply_font_format     ();
-        void     update_all_text_format(uint16_t);
-        uint16_t calculate_font_size   ()                      const;
+        void     apply_font_format     (                   )          ;
+        void     update_all_text_format(uint16_t           )          ;
+        uint16_t calculate_font_size   (                   )  const   ;
 
     private slots:
-        void     handle_text_changed   ();
+        void     handle_text_changed   (                   )          ;
 
     protected:
-        void     resizeEvent           (      QResizeEvent *)  override;
-        void     focusInEvent          (      QFocusEvent  *)  override;
-        void     keyPressEvent         (      QKeyEvent    *)  override;
-        void     insertFromMimeData    (const QMimeData    *)  override;
+        void     resizeEvent           (      QResizeEvent*)  override;
+        void     focusInEvent          (      QFocusEvent* )  override;
+        void     keyPressEvent         (      QKeyEvent*   )  override;
+        void     insertFromMimeData    (const QMimeData*   )  override;
 
     public:
-        explicit ResizablePlainTextEdit(      QWidget*       = nullptr);
+        explicit ResizablePlainTextEdit(QWidget* =nullptr  )          ;
 };
 
 class DraftsmanHighlighter : public QSyntaxHighlighter
@@ -76,22 +76,22 @@ class DraftsmanHighlighter : public QSyntaxHighlighter
     private:
         struct Rule
         {
-            QRegularExpression p;
-            QTextCharFormat    f;
+            QRegularExpression p                                      ;
+            QTextCharFormat    f                                      ;
         };
 
-        QVector<Rule> rs;
-        QTextCharFormat defaultFormat;
+        QVector<Rule> rs                                              ;
+        QTextCharFormat defaultFormat                                 ;
 
     protected:
         void highlightBlock(const QString &text) override
         {
             setFormat(0, text.length(), defaultFormat);
 
-            uint32_t i, s, l;
+            uint32_t                   i, s, l;
             QRegularExpressionMatchIterator it;
-            QRegularExpressionMatch m;
-            Rule r;
+            QRegularExpressionMatch          m;
+            Rule                             r;
 
             for(i = 0; i < rs.size(); ++i) {
                 r = rs.at(i);
@@ -108,7 +108,7 @@ class DraftsmanHighlighter : public QSyntaxHighlighter
     public:
         DraftsmanHighlighter(QTextDocument *p) : QSyntaxHighlighter(p)
         {
-            QTextCharFormat f;
+            QTextCharFormat f                                                              ;
 
             f.setForeground(GREEN);
             rs.append({ QRegularExpression(R"(вправо|влево|вверх|вниз|красить)",
@@ -130,7 +130,7 @@ class DraftsmanHighlighter : public QSyntaxHighlighter
             rs.append({ QRegularExpression(R"(\((.*?)\))",
                                            QRegularExpression::CaseInsensitiveOption), f });
 
-            defaultFormat.setForeground(WHITE);
+            defaultFormat.setForeground(WHITE)                                             ;
         }
 };
 

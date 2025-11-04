@@ -108,7 +108,11 @@ void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
 
 void GameFieldWidget::mousePressEvent(QMouseEvent *e)
 {
-    int16_t cw = width() / c, ch = height() / r, x = e->pos().x() / cw, y = e->pos().y() / ch;
+    int16_t cs  = std::min(width()    / c, height() / r),
+            ox  = (width()  - cs * c) / 2,
+            oy  = (height() - cs * r) / 2,
+            x   = (e->pos().x() - ox) / cs,
+            y   = (e->pos().y() - oy) / cs;
 
     if(x >= 0 && x < c && y >= 0 && y < r) {
         md = 1;

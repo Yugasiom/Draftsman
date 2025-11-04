@@ -18,15 +18,18 @@ class RPTERadioButton : public QRadioButton
 
 
     private:
-            void     apply_font_format  ();
-            uint16_t calculate_font_size()               const;
+            QString  ot                                               ;
+            QSize    ls                                               ;
+
+            void     apply_font_format  ()                            ;
+            uint16_t calculate_font_size(                   ) const   ;
 
     protected:
-            void     resizeEvent        (QResizeEvent *) override;
-            void     focusInEvent       (QFocusEvent  *) override;
+            void     resizeEvent        (      QResizeEvent*) override;
+            void     focusInEvent       (      QFocusEvent*)  override;
 
     public:
-        explicit     RPTERadioButton    (QWidget* =nullptr);
+        explicit     RPTERadioButton    (      QWidget* =nullptr)     ;
 };
 
 

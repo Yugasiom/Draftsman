@@ -173,16 +173,14 @@ void ResizablePlainTextEdit::insertFromMimeData(const QMimeData *s)
 
 uint16_t ResizablePlainTextEdit::calculate_font_size() const
 {
-    uint16_t h     = height();
-    uint16_t min_h = 475;
-    uint16_t max_h = 1140;
-    uint16_t min_f = 14;
-    uint16_t max_f = 22;
+    uint16_t h     = height(), min_h = 475, max_h = 1140,
+                               min_f =  14, max_f =   22;
 
     h = qBound(min_h, h, max_h);
 
     double r     = static_cast<double>(h - min_h) / (max_h - min_h);
     uint16_t f_s = min_f + static_cast<uint16_t>(r * (max_f - min_f));
+
 
     return f_s;
 }

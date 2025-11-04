@@ -1,25 +1,24 @@
 #include "rpte_spin_box.hpp"
 
 
-RPTESpinBox::RPTESpinBox(QWidget *parent) :
-                         QSpinBox(parent)
+RPTESpinBox::RPTESpinBox(QWidget *p) :
+                         QSpinBox(p)
 {
     apply_font_format();
 }
 
 
-void RPTESpinBox::resizeEvent(QResizeEvent *event)
+void RPTESpinBox::resizeEvent(QResizeEvent *e)
 {
-    QSpinBox::resizeEvent(event);
-
+    QSpinBox::resizeEvent(e);
     QTimer::singleShot(0, this, [this]() {
         apply_font_format();
     });
 }
 
-void RPTESpinBox::focusInEvent(QFocusEvent *event)
+void RPTESpinBox::focusInEvent(QFocusEvent *e)
 {
-    QSpinBox::focusInEvent(event);
+    QSpinBox::focusInEvent(e);
     apply_font_format();
 }
 
@@ -38,11 +37,11 @@ uint16_t RPTESpinBox::calculate_font_size() const
     const uint16_t min_h = 21,
                    max_h = 60,
                    min_f = 12,
-                   max_f = 20;
-
-    uint16_t       h     = qBound(min_h, static_cast<uint16_t>(height()), max_h);
+                   max_f = 18,
+                   h     = qBound(min_h, static_cast<uint16_t>(height()), max_h);
     double         r     = static_cast<double>(h - min_h) / (max_h - min_h);
     uint16_t       f_s   = min_f + static_cast<uint16_t>(r * (max_f - min_f));
+
 
     return         f_s;
 }

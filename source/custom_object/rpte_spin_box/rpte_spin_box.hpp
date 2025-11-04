@@ -18,15 +18,15 @@ class RPTESpinBox : public QSpinBox
 
 
     private:
-            void     apply_font_format  ();
-            uint16_t calculate_font_size()               const;
+            void     apply_font_format  (                 )         ;
+            uint16_t calculate_font_size(                 ) const   ;
 
     protected:
-            void     resizeEvent        (QResizeEvent *) override;
-            void     focusInEvent       (QFocusEvent  *) override;
+            void     resizeEvent        (QResizeEvent*    ) override;
+            void     focusInEvent       (QFocusEvent*     ) override;
 
     public:
-        explicit     RPTESpinBox        (QWidget* =nullptr);
+        explicit     RPTESpinBox        (QWidget* =nullptr)         ;
 };
 
 

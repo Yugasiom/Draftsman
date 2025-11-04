@@ -18,15 +18,15 @@ class RPTLabel : public QLabel
 
 
     private:
-            void     apply_font_format  ();
-            uint16_t calculate_font_size()               const;
+            void     apply_font_format  (                 )         ;
+            uint16_t calculate_font_size(                 ) const   ;
 
     protected:
-            void     resizeEvent        (QResizeEvent *) override;
-            void     focusInEvent       (QFocusEvent  *) override;
+            void     resizeEvent        (QResizeEvent*    ) override;
+            void     focusInEvent       (QFocusEvent*     ) override;
 
     public:
-        explicit     RPTLabel           (QWidget* =nullptr);
+        explicit     RPTLabel           (QWidget* =nullptr)         ;
 };
 
 
