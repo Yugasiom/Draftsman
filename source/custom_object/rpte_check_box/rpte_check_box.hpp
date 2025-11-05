@@ -18,9 +18,6 @@ class RPTECheckBox : public QCheckBox
 
 
     private:
-            QString  ot                                              ;
-            QSize    ls                                              ;
-
             void     apply_font_format  (                 )          ;
             uint16_t calculate_font_size(                 )     const;
 

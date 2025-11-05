@@ -5,9 +5,7 @@
 RPTECheckBox::RPTECheckBox(QWidget  *p) :
                            QCheckBox(p)
 {
-    connect(this, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState) {
-        apply_font_format();
-    });
+    apply_font_format();
 }
 
 
@@ -27,50 +25,12 @@ void RPTECheckBox::focusInEvent(QFocusEvent *e)
 
 void RPTECheckBox::apply_font_format()
 {
-    QSize              ws = window() ? window()->size() : QSize(1024, 640);
-    int32_t            ww = ws.width()  , wh = ws.height()                ;
-    bool                c = (ww == 800 && wh == 500)                      ;
-    ls = ws;
-    int32_t            is = 32                                            ;
-    if(!icon().isNull()) {
-        setIconSize(QSize(is, is));
-    }
+    uint16_t f_s = calculate_font_size();
 
-    if(c) {
-        if(!text().isEmpty()) {
-            ot = text();
-        }
+    QFont f;
+    f.setPointSize(f_s);
 
-        setText("");
-
-
-        return;
-    } else {
-        if(text().isEmpty() && !ot.isEmpty()) {
-            setText(ot);
-        }
-    }
-
-    uint16_t          f_s = calculate_font_size()                         ;
-    QFont               f                                                 ;
-    f.setPointSize(f_s)                                                   ;
-    QFontMetrics       fm(f)                                              ;
-    int32_t            tw = fm.horizontalAdvance(text()),
-                        a = width() - iconSize().width() - 8              ;
-
-    while(tw > a && f_s > 8) {
-        --f_s                                                             ;
-        f.setPointSize(f_s)                                               ;
-        setFont(f)                                                        ;
-        fm = QFontMetrics(f)                                              ;
-        tw = fm.horizontalAdvance(text())                                 ;
-    }
-
-    if(tw > a) {
-        setText("")                                                       ;
-    } else {
-        setFont(f)                                                        ;
-    }
+    setFont(f);
 }
 
 uint16_t RPTECheckBox::calculate_font_size() const
@@ -89,11 +49,8 @@ uint16_t RPTECheckBox::calculate_font_size() const
 
 void RPTECheckBox::showEvent(QShowEvent *e)
 {
-    QCheckBox::showEvent(e);
-
-    bool was_checked = isChecked();
-    setChecked(false);
-    setChecked(was_checked);
-
-    apply_font_format();
+    QCheckBox::showEvent(e)           ;
+               setChecked(false)      ;
+               setChecked(isChecked());
+               apply_font_format()    ;
 }
