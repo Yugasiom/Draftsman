@@ -46,6 +46,10 @@ RESOURCES += \
     resource.qrc
 
 DISTFILES += \
+    source/font/MesloLGSNerdFont-Regular.ttf \
+    source/icon/lock.png \
+    source/icon/player.png \
+    source/icon/shape.png \
     source/icons/player.png \
     source/icons/shape.png  \
     source/icons/lock.png   \
