@@ -18,7 +18,6 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
     int16_t y, x;
     r = qBound(int16_t(1), nr, max_r);
     c = qBound(int16_t(1), nc, max_c);
-
     for(y = 0; y < max_r; ++y) {
         for(x = 0; x < max_c; ++x) {
             cells[y][x].ti = 0;
@@ -38,25 +37,20 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
-
     int16_t y, x , cs = std::min(width()    / c, height() / r),
             ox  = (width()  - cs * c) / 2,
             oy  = (height() - cs * r) / 2;
-
     uint16_t rad;
-
     for(y = 0; y < r; ++y) {
         for(x = 0; x < c; ++x) {
             QRect re(ox + x * cs, oy + y * cs, cs, cs);
             const Cell &ce = cells[y][x];
-
             QColor f = ce.c.isValid() ? ce.c : COLOR_FIELD, b;
             if(ce.ti == 3) {
                 f = COLOR_FIELD;
             }
 
             p.fillRect(re, f);
-
             if(ce.ti == 3) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
 
@@ -95,7 +89,6 @@ void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
         oy  = (height() - cs * r) / 2,
         x   = (e->pos().x() - ox) / cs,
         y   = (e->pos().y() - oy) / cs;
-
     if(x >= 0 && x < c && y >= 0 && y < r) {
         h = QPoint(x, y);
         if(md) {
@@ -113,7 +106,6 @@ void GameFieldWidget::mousePressEvent(QMouseEvent *e)
             oy  = (height() - cs * r) / 2,
             x   = (e->pos().x() - ox) / cs,
             y   = (e->pos().y() - oy) / cs;
-
     if(x >= 0 && x < c && y >= 0 && y < r) {
         md = 1;
         handle_click(x, y);
@@ -134,10 +126,8 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
     }
 
     lc = QPoint(x, y);
-
     Cell &cell = cells[y][x];
     int16_t yy, xx;
-
     if(ct != 1 && cell.c == COLOR_EMPTY) {
         return;
     }

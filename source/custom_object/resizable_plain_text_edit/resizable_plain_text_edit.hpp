@@ -28,12 +28,12 @@
 #include <QAbstractTextDocumentLayout>
 
 
-#define WHITE  QColor(255, 255, 255)
-#define GREY   QColor(150, 150, 150)
-#define RED    QColor(255, 000, 100)
-#define GREEN  QColor(000, 255, 035)
-#define BLUE   QColor(000, 175, 255)
-#define YELLOW QColor(235, 220, 160)
+                    const QColor WHITE  = QColor(255, 255, 255);
+                    const QColor GREY   = QColor(150, 150, 150);
+                    const QColor RED    = QColor(255, 000, 100);
+                    const QColor GREEN  = QColor(000, 255, 035);
+                    const QColor BLUE   = QColor(000, 175, 255);
+                    const QColor YELLOW = QColor(235, 220, 160);
 
 
 extern thread_local const QStringList o;

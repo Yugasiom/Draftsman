@@ -12,23 +12,21 @@ void RPTLabel::resizeEvent(QResizeEvent *e)
 {
     QLabel::resizeEvent(e);
     QTimer::singleShot(0, this, [this]() {
-        apply_font_format();
+            apply_font_format();
     });
 }
 
 void RPTLabel::focusInEvent(QFocusEvent *e)
 {
     QLabel::focusInEvent(e);
-    apply_font_format();
+            apply_font_format();
 }
 
 void RPTLabel::apply_font_format()
 {
     uint16_t f_s = calculate_font_size();
-
     QFont f;
     f.setPointSize(f_s);
-
     setFont(f);
 }
 

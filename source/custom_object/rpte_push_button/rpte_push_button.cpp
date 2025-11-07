@@ -11,25 +11,22 @@ RPTEPushButton::RPTEPushButton(QWidget *p) :
 void RPTEPushButton::resizeEvent(QResizeEvent *e)
 {
     QPushButton::resizeEvent(e);
-
     QTimer::singleShot(0, this, [this]() {
-        apply_font_format();
+            apply_font_format();
     });
 }
 
 void RPTEPushButton::focusInEvent(QFocusEvent *e)
 {
     QPushButton::focusInEvent(e);
-    apply_font_format();
+                 apply_font_format();
 }
 
 void RPTEPushButton::apply_font_format()
 {
     uint16_t f_s = calculate_font_size();
-
     QFont f;
     f.setPointSize(f_s);
-
     setFont(f);
 }
 

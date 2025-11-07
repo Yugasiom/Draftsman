@@ -13,10 +13,12 @@ int main(int32_t argc, char *argv[])
 
 
 
-    int32_t id = QFontDatabase::addApplicationFont(":./source/font/MesloLGSNerdFont-Regular.ttf");
+    int32_t id = QFontDatabase::addApplicationFont(":/font/source/font/MesloLGSNerdFont-Regular.ttf");
     if(id != -1) {
         QString fa = QFontDatabase::applicationFontFamilies(id).at(0);
-        QFont f(fa);
+        QFont f(fa, 12, QFont::DemiBold);
+        f.setHintingPreference(QFont::PreferFullHinting);
+        f.setStyleStrategy(QFont::PreferAntialias);
         a.setFont(f);
     }
 

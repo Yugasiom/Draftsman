@@ -47,6 +47,8 @@ RESOURCES += \
 
 DISTFILES += \
     source/icons/player.png \
-    source/icons/shape.png
+    source/icons/shape.png  \
+    source/icons/lock.png   \
+    source/icon/flag.png
 
 

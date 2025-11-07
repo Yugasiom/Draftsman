@@ -44,17 +44,13 @@ ResizablePlainTextEdit::ResizablePlainTextEdit(QWidget *p) :
 void ResizablePlainTextEdit::resizeEvent(QResizeEvent *e)
 {
     QTextEdit::resizeEvent(e);
-
     QTimer::singleShot(0, this, [this]() {
-        uint16_t f_s = calculate_font_size();
-
-        QFont f = font();
-        f.setPointSize(f_s);
-        setFont(f);
-
-        update_all_text_format(f_s);
+            uint16_t f_s = calculate_font_size();
+            QFont f = font();
+            f.setPointSize(f_s);
+            setFont(f);
+            update_all_text_format(f_s);
     });
-
 
     lna->setGeometry(QRect(0, 0, line_number_area_width(), height()));
     setViewportMargins(line_number_area_width() + 5, 0, 0, 0);
@@ -63,7 +59,7 @@ void ResizablePlainTextEdit::resizeEvent(QResizeEvent *e)
 void ResizablePlainTextEdit::focusInEvent(QFocusEvent *e)
 {
     QTextEdit::focusInEvent(e);
-    apply_font_format();
+               apply_font_format();
 }
 
 
@@ -71,7 +67,6 @@ QString normalize_case(const QString &w)
 {
     uint32_t u = 0, l = 0, i;
     QChar ch;
-
     for(i = 0; i < w.length(); ++i) {
         ch = w.at(i);
         if(ch.isUpper()) {
@@ -126,8 +121,8 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
 
 
     apply_font_format();
-    QTextEdit::keyPressEvent(e);
 
+    QTextEdit::keyPressEvent(e);
     QTextCursor c = textCursor();
     int32_t p = c.position();
 
@@ -135,7 +130,6 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
 
     QString w = c.selectedText();
     QString f;
-
     if(o.contains(w.trimmed(), Qt::CaseInsensitive)) {
         f = normalize_case(w);
         c.insertText(f);
@@ -147,14 +141,11 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
 void ResizablePlainTextEdit::apply_font_format()
 {
     uint16_t f_s = calculate_font_size();
-
     QTextCharFormat fmt;
     fmt.setFontPointSize(f_s);
-
     QTextCursor c = textCursor();
     c.setCharFormat(fmt);
     setTextCursor(c);
-
     setCurrentCharFormat(fmt);
 }
 
@@ -167,7 +158,7 @@ void ResizablePlainTextEdit::handle_text_changed()
 
 void ResizablePlainTextEdit::insertFromMimeData(const QMimeData *s)
 {
-    apply_font_format();
+               apply_font_format();
     QTextEdit::insertFromMimeData(s);
 }
 
@@ -175,9 +166,7 @@ uint16_t ResizablePlainTextEdit::calculate_font_size() const
 {
     uint16_t h     = height(), min_h = 475, max_h = 1140,
                                min_f =  14, max_f =   22;
-
     h = qBound(min_h, h, max_h);
-
     double r     = static_cast<double>(h - min_h) / (max_h - min_h);
     uint16_t f_s = min_f + static_cast<uint16_t>(r * (max_f - min_f));
 
@@ -189,10 +178,8 @@ void ResizablePlainTextEdit::update_all_text_format(uint16_t nfs)
 {
     QTextCursor d_c(document());
     d_c.beginEditBlock();
-
     QTextBlockFormat b_fmt;
     b_fmt.setLineHeight(125, QTextBlockFormat::ProportionalHeight);
-
     QTextBlock b = document()->firstBlock();
     QTextCharFormat fmt;
     while(b.isValid()) {
@@ -217,24 +204,20 @@ uint16_t ResizablePlainTextEdit::line_number_area_width() const
 void ResizablePlainTextEdit::paint_line_number_area(QPaintEvent *e)
 {
     QPainter    p(lna);
-    p.fillRect(e->rect(), QColor(46, 46, 46));
-
+    p.fillRect(e->rect(), QColor(060, 060, 060));
     QFont       nf;
     nf.setPointSize(12);
     p.setFont(nf);
-
     QTextBlock  b  = document()->firstBlock();
     int32_t     bn = 1, sy = verticalScrollBar()->value();
     QRectF      r;
     QPointF     pos;
     QString     n;
-
     QTextCursor c  = textCursor();
     int32_t     ss = c.selectionStart(), se = c.selectionEnd(), cs = c.block().position(),
                 bs                     , be;
     uint16_t    s;
     QColor      nc(255, 100, 0), sc(255, 220, 0);
-
     while(b.isValid()) {
         r = document()->documentLayout()->blockBoundingRect(b);
         pos = r.topLeft() - QPointF(0, sy);

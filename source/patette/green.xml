@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<palette>
+ <active>
+  <colorrole role="Mid">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+  <colorrole role="Highlight">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+ </active>
+ <inactive>
+  <colorrole role="Mid">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+  <colorrole role="Highlight">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+ </inactive>
+ <disabled>
+  <colorrole role="Mid">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+  <colorrole role="Highlight">
+   <brush brushstyle="SolidPattern">
+    <color alpha="255">
+     <red>31</red>
+     <green>155</green>
+     <blue>93</blue>
+    </color>
+   </brush>
+  </colorrole>
+ </disabled>
+</palette>

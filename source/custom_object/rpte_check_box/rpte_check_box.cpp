@@ -26,10 +26,8 @@ void RPTECheckBox::focusInEvent(QFocusEvent *e)
 void RPTECheckBox::apply_font_format()
 {
     uint16_t f_s = calculate_font_size();
-
     QFont f;
     f.setPointSize(f_s);
-
     setFont(f);
 }
 
