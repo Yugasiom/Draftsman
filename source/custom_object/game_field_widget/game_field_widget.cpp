@@ -58,7 +58,36 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 f = COLOR_FIELD;
             }
 
-            p.fillRect(re, f);
+            if(       ce.ti == 4 && ce.c == COLOR_FIELD) {
+                QImage flag(":/icon/source/icon/flag.png");
+                float hc = 0.75;
+                if(!flag.isNull()) {
+                    p.fillRect(re, ce.c);
+                    QSize tars(re.width() * hc, re.height() * hc);
+                    QImage sca = flag.scaled(tars, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    QPoint cent = re.center() - QPoint(sca.width() / 2, sca.height() / 2);
+                    QRect tarr(cent, sca.size());
+                    p.drawImage(tarr, sca);
+                } else {
+                    p.fillRect(re, ce.c);
+                }
+            } else if(ce.ti == 2 && ce.c == COLOR_ENEMY) {
+                QImage sel(":/icon/source/icon/shape.png");
+                float hc = 0.75;
+                if(!sel.isNull()) {
+                    p.fillRect(re, COLOR_FIELD);
+                    QSize tars(re.width() * hc, re.height() * hc);
+                    QImage sca = sel.scaled(tars, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                    QPoint cent = re.center() - QPoint(sca.width() / 2, sca.height() / 2);
+                    QRect tarr(cent, sca.size());
+                    p.drawImage(tarr, sca);
+                } else {
+                    p.fillRect(re, COLOR_FIELD);
+                }
+            } else {
+                p.fillRect(re, f);
+            }
+
             if(ce.ti == 3) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
 
@@ -150,7 +179,9 @@ void GameFieldWidget::mouseReleaseEvent(QMouseEvent *)
 void GameFieldWidget::handle_click(int16_t x, int16_t y)
 {
     if(lc == QPoint(x, y)) {
-        return;
+        if(ct != 1 || md) {
+            return;
+        }
     }
 
     lc = QPoint(x, y);
@@ -161,22 +192,40 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
     }
 
     if(ct == 1) {
-        if(cell.c == COLOR_EMPTY) {
+        if(cell.ti == 4) {
+            cell.c = COLOR_FIELD;
+            cell.ti = 0;
+
+
+            return;
+        } else if(cell.c == COLOR_EMPTY) {
             cell.c = COLOR_FIELD;
             cell.ti = 1;
-        } else if(cell.c == COLOR_FIELD) {
-            if((r == 1 && c == 2) || (r == 2 && c == 1)) {
+
+
+            return;
+        } else if(cell.c == COLOR_FIELD && cell.ti != 3) {
+            if(  (r == 1 && c == 2)     || (r == 2 && c == 1)) {
                 return;
             }
 
             cell.c = COLOR_ENEMY;
             cell.ti = 2;
-        } else if(cell.c == COLOR_FLAG || cell.c == COLOR_PLAYER) {
+
+
+            return;
+        } else if(cell.ti == 3) {
             cell.c = COLOR_FIELD;
             cell.ti = 0;
+
+
+            return;
         } else if(cell.c == COLOR_ENEMY) {
             cell.c = COLOR_EMPTY;
             cell.ti = 0;
+
+
+            return;
         }
 
 
@@ -198,31 +247,34 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         cell.ti = 3;
-        cell.c = COLOR_PLAYER;
+        cell.c = COLOR_FIELD;
+
 
         return;
     }
 
     if(ct == 2) {
-        if(cell.c == COLOR_EMPTY || (cell.ti == 2 && cell.c == COLOR_FLAG)) {
-            return;
-        }
-
         if((r == 1 && c == 2) || (r == 2 && c == 1)) {
             for(yy = 0; yy < r; ++yy) {
                 for(xx = 0; xx < c; ++xx) {
-                    if(cells[yy][xx].c == COLOR_FLAG) {
-                        cells[yy][xx].c = COLOR_FIELD;
+                    if(cells[yy][xx].ti == 4) {
                         cells[yy][xx].ti = 0;
+                        cells[yy][xx].c = COLOR_FIELD;
                     }
                 }
             }
         }
 
-        cell.ti = 2;
-        cell.c = COLOR_FLAG;
+        if(cell.c == COLOR_EMPTY) {
+            return;
+        }
+
+        cell.ti = 4;
+        cell.c = COLOR_FIELD;
 
 
         return;
     }
+
+    update();
 }
