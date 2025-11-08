@@ -71,7 +71,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 } else {
                     p.fillRect(re, ce.c);
                 }
-            } else if(ce.ti == 2 && ce.c == COLOR_ENEMY) {
+            } else if(ce.ti == 2) {
                 QImage sel(":/icon/source/icon/shape.png");
                 float hc = 0.75;
                 if(!sel.isNull()) {
@@ -88,7 +88,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 p.fillRect(re, f);
             }
 
-            if(ce.ti == 3) {
+            if(ce.ti == TYPE_PLAYER || (ce.ti == TYPE_ENEMY && lc == QPoint(x, y))) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
 
 
@@ -106,8 +106,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             }
 
             if((ct == 1 || ct == 2 || ct == 3) && h == QPoint(x, y) && !md) {
-                if(ct == 1 || ce.c == COLOR_FIELD || ce.c == COLOR_FLAG ||
-                    ce.c == COLOR_ENEMY || ce.c == COLOR_PLAYER) {
+                if(ct == 1 || ce.c == COLOR_FIELD || ce.c == COLOR_PLAYER) {
                     p.fillRect(re, COLOR_HOVER);
                 }
             }
@@ -132,12 +131,14 @@ void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
     if(x >= 0 && x < c && y >= 0 && y < r) {
         QRect cellRect(ox + x * cs, oy + y * cs, cs, cs);
         if(cellRect.contains(pos)) {
-            h = QPoint(x, y);
-            if(md) {
-                handle_click(x, y);
-            }
+            if(h != QPoint(x, y)) {
+                h = QPoint(x, y);
+                if(md) {
+                    handle_click(x, y);
+                }
 
-            update();
+                update();
+            }
 
 
             return;
@@ -172,109 +173,203 @@ void GameFieldWidget::leaveEvent(QEvent*)
 
 void GameFieldWidget::mouseReleaseEvent(QMouseEvent *)
 {
-    md =   0;
-    lc = {-1, -1};
+    md = 0;
+    bool ko =
+              lc.y() >= 0 && lc.x() >= 0 &&
+              lc.y() <  r && lc.x() <  c &&
+              cells[lc.y()][lc.x()].ti   == TYPE_ENEMY;
+    if(!ko) {
+        lc = {-1, -1};
+    }
 }
 
 void GameFieldWidget::handle_click(int16_t x, int16_t y)
 {
-    if(lc == QPoint(x, y)) {
-        if(ct != 1 || md) {
-            return;
-        }
-    }
-
-    lc = QPoint(x, y);
     Cell &cell = cells[y][x];
-    int16_t yy, xx;
-    if(ct != 1 && cell.c == COLOR_EMPTY) {
-        return;
-    }
-
-    if(ct == 1) {
-        if(cell.ti == 4) {
-            cell.c = COLOR_FIELD;
-            cell.ti = 0;
+    int16_t xx, yy;
+    if(         ct == TOOL_FIELD) {
+        if(cell.ti == TYPE_ENEMY && lc == QPoint(x, y)) {
+            cell.ti = TYPE_PLAYER;
+            lc = {-1, -1};
 
 
             return;
-        } else if(cell.c == COLOR_EMPTY) {
-            cell.c = COLOR_FIELD;
-            cell.ti = 1;
+        }
 
-
-            return;
-        } else if(cell.c == COLOR_FIELD && cell.ti != 3) {
-            if(  (r == 1 && c == 2)     || (r == 2 && c == 1)) {
-                return;
+        if(cell.ti == TYPE_ENEMY) {
+            cell.ti = TYPE_NONE;
+            cell.c  = COLOR_EMPTY;
+            if(lc == QPoint(x, y)) {
+                lc = {-1, -1};
             }
 
-            cell.c = COLOR_ENEMY;
-            cell.ti = 2;
-
 
             return;
-        } else if(cell.ti == 3) {
-            cell.c = COLOR_FIELD;
-            cell.ti = 0;
+        }
 
-
-            return;
-        } else if(cell.c == COLOR_ENEMY) {
-            cell.c = COLOR_EMPTY;
-            cell.ti = 0;
+        if(cell.ti == TYPE_PLAYER) {
+            cell.ti = TYPE_ENEMY;
+            lc = QPoint(x, y);
 
 
             return;
         }
 
+        if(cell.ti == TYPE_FLAG) {
+            cell.ti = TYPE_FIELD;
 
-        return;
-    }
 
-    if(ct == 3) {
-        if(cell.c == COLOR_EMPTY || cell.ti == 3) {
             return;
         }
 
-        for(yy = 0; yy < r; ++yy) {
-            for(xx = 0; xx < c; ++xx) {
-                if(cells[yy][xx].ti == 3) {
-                    cells[yy][xx].ti = 1;
-                    cells[yy][xx].c = COLOR_FIELD;
-                }
+        if( cell.c == COLOR_EMPTY) {
+            cell.c  = COLOR_FIELD;
+            cell.ti = TYPE_FIELD;
+
+
+            return;
+        }
+
+        if((r == 1 && c == 2) || (r == 2 && c == 1)) {
+            if(cell.ti == TYPE_FIELD) {
+                cell.ti = TYPE_NONE;
+                cell.c  = COLOR_EMPTY;
             }
+
+
+            return;
         }
 
-        cell.ti = 3;
-        cell.c = COLOR_FIELD;
+        if(cell.ti == TYPE_FIELD) {
+            cell.ti = TYPE_ENEMY;
+
+
+            return;
+        }
 
 
         return;
     }
 
-    if(ct == 2) {
+    if(ct == TOOL_FLAG) {
+        if(cell.c == COLOR_EMPTY) {
+            return;
+        }
+
+        if(cell.ti == TYPE_FLAG) {
+            cell.ti = TYPE_FIELD;
+            if(lc == QPoint(x, y)) {
+                lc = {-1, -1};
+            }
+
+
+            return;
+        }
+
         if((r == 1 && c == 2) || (r == 2 && c == 1)) {
             for(yy = 0; yy < r; ++yy) {
                 for(xx = 0; xx < c; ++xx) {
-                    if(cells[yy][xx].ti == 4) {
-                        cells[yy][xx].ti = 0;
-                        cells[yy][xx].c = COLOR_FIELD;
+                    if(cells[yy][xx].ti == TYPE_FLAG) {
+                        cells[yy][xx].ti = TYPE_FIELD;
                     }
                 }
             }
         }
 
-        if(cell.c == COLOR_EMPTY) {
+        if(cell.ti == TYPE_ENEMY && lc == QPoint(x, y)) {
+            lc = {-1, -1};
+            cell.ti = TYPE_FLAG;
+
+
             return;
         }
 
-        cell.ti = 4;
-        cell.c = COLOR_FIELD;
+        if(cell.ti == TYPE_PLAYER) {
+            cell.ti = TYPE_FLAG;
+            if(lc == QPoint(x, y)) {
+                lc = {-1, -1};
+            }
+
+
+            return;
+        }
+
+        if(cell.ti == TYPE_ENEMY) {
+            cell.ti = TYPE_FLAG;
+            if(lc == QPoint(x, y)) {
+                lc = {-1, -1};
+            }
+
+
+            return;
+        }
+
+        if(cell.ti == TYPE_FIELD) {
+            cell.ti = TYPE_FLAG;
+            if(lc == QPoint(x, y)) {
+                lc = {-1, -1};
+            }
+
+
+            return;
+        }
 
 
         return;
     }
 
-    update();
+    if(ct == TOOL_PLAYER) {
+        if(cell.c == COLOR_EMPTY) {
+            return;
+        }
+
+        if((lc == QPoint(x, y)) && cell.ti == TYPE_ENEMY) {
+            lc = {-1, -1};
+
+
+            return;
+        }
+
+        if(cell.ti == TYPE_PLAYER) {
+            cell.ti = TYPE_FIELD;
+            lc = {-1, -1};
+
+
+            return;
+        }
+
+        for(yy = 0; yy < r; ++yy) {
+            for(xx = 0; xx < c; ++xx) {
+                if(cells[yy][xx].ti == TYPE_PLAYER) {
+                    cells[yy][xx].ti = TYPE_FIELD;
+                }
+            }
+        }
+
+        if(cell.ti == TYPE_FLAG) {
+            cell.ti = TYPE_PLAYER;
+            lc = {-1, -1};
+
+
+            return;
+        }
+
+        if(cell.ti == TYPE_ENEMY) {
+            lc = QPoint(x, y);
+
+
+            return;
+        }
+
+        if(cell.ti == TYPE_FIELD) {
+            cell.ti = TYPE_PLAYER;
+            lc = {-1, -1};
+
+
+            return;
+        }
+
+
+        return;
+    }
 }

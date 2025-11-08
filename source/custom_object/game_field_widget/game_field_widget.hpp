@@ -1,9 +1,12 @@
 #ifndef GAME_FIELD_WIDGET_HPP
 
+
 #define GAME_FIELD_WIDGET_HPP
 
 
+
 #include <cstdint>
+
 
 #include <QPoint>
 #include <QColor>
@@ -13,23 +16,33 @@
 #include <QPainterPath>
 
 
+
 #define WHITE         QColor(255, 255, 255)
 #define GRAY          QColor(130, 130, 130)
 #define DARK_GRAY     QColor(060, 060, 060)
-#define RED           QColor(255, 000, 000)
-#define GREEN         QColor(000, 255, 000)
-#define BLUE          QColor(000, 000, 255)
-#define YELLOW        QColor(255, 255, 000)
 #define ORANGE        QColor(255, 140, 000)
 #define PURPLE        QColor(160, 032, 240)
 
+
+#define TOOL_FIELD   1
+#define TOOL_FLAG    2
+#define TOOL_PLAYER  3
+
+
+#define TYPE_NONE    0
+#define TYPE_FIELD   1
+#define TYPE_ENEMY   2
+#define TYPE_PLAYER  3
+#define TYPE_FLAG    4
+
+
 #define COLOR_FIELD   WHITE
 #define COLOR_EMPTY   GRAY
+
 #define COLOR_BORDER  DARK_GRAY
-#define COLOR_FLAG    RED
-#define COLOR_ENEMY   YELLOW
 #define COLOR_HOVER   ORANGE
 #define COLOR_PLAYER  PURPLE
+
 
 
 class GameFieldWidget : public QWidget
@@ -71,6 +84,7 @@ class GameFieldWidget : public QWidget
                      void           set_size         (int16_t, int16_t);
                      void           set_current_tool (int32_t)         ;
 };
+
 
 
 #endif  // GAME_FIELD_WIDGET_HPP
