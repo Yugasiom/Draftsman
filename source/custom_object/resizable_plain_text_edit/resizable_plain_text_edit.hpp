@@ -34,6 +34,7 @@
                     const QColor GREEN  = QColor(000, 255, 035);
                     const QColor BLUE   = QColor(000, 175, 255);
                     const QColor YELLOW = QColor(235, 220, 160);
+                    const QColor GOLD   = QColor(255, 210, 000);
 
 
 extern thread_local const QStringList o;
@@ -110,8 +111,13 @@ class DraftsmanHighlighter : public QSyntaxHighlighter
         {
             QTextCharFormat f                                                              ;
 
+
+            f.setForeground(GOLD);
+            rs.append({ QRegularExpression(R"(красить)",
+                                          QRegularExpression::CaseInsensitiveOption), f });
+
             f.setForeground(GREEN);
-            rs.append({ QRegularExpression(R"(вправо|влево|вверх|вниз|красить)",
+            rs.append({ QRegularExpression(R"(вправо|влево|вверх|вниз)",
                                            QRegularExpression::CaseInsensitiveOption), f });
 
             f.setForeground(RED);

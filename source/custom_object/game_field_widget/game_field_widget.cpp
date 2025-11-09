@@ -16,20 +16,20 @@ namespace std
     {
         std::size_t operator()(const QPoint& p) const noexcept
         {
-            return qHash(p);
+            return qHash(p)                                 ;
         }
-    };
+    }                                                       ;
 }
 
 
 
 GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
 {
-    cells.assign(max_r, std::vector<Cell>(max_c));
-    setMouseTracking(true);
-    set_size(r, c);
-    flag_pix.load(":/icon/source/icon/flag.png");
-    sel_pix.load(":/icon/source/icon/shape.png");
+    cells.assign(max_r, std::vector<Cell>(max_c))           ;
+    setMouseTracking(true)                                  ;
+    set_size(r, c)                                          ;
+    flag_pix.load(":/icon/source/icon/flag.png")            ;
+    sel_pix.load(":/icon/source/icon/shape.png")            ;
 }
 
 void GameFieldWidget::set_size(int16_t nr, int16_t nc)
