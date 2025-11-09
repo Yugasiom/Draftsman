@@ -1,14 +1,31 @@
+#include <queue>
+#include <algorithm>
+#include <unordered_map>
+
 #include "game_field_widget.hpp"
 
 
 
-const int16_t GameFieldWidget::max_r;
-const int16_t GameFieldWidget::max_c;
+const int16_t GameFieldWidget::max_r, GameFieldWidget::max_c;
+
+
+
+namespace std
+{
+    template<> struct hash<QPoint>
+    {
+        std::size_t operator()(const QPoint& p) const noexcept
+        {
+            return qHash(p);
+        }
+    };
+}
 
 
 
 GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
 {
+    cells.assign(max_r, std::vector<Cell>(max_c));
     setMouseTracking(true);
     set_size(r, c);
     flag_pix.load(":/icon/source/icon/flag.png");
@@ -17,10 +34,12 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
 
 void GameFieldWidget::set_size(int16_t nr, int16_t nc)
 {
+    cells.assign(max_r, std::vector<Cell>(max_c));
     int16_t y, x, cs = std::min(width()    / c, height() / r)       ;
     float hp = 0.75;
     r = qBound(int16_t(1), nr, max_r);
     c = qBound(int16_t(1), nc, max_c);
+    Q_ASSERT(r <= max_r && c <= max_c);
     if(r == 1 && c == 1) {
         r = 1;
         c = 2;
@@ -121,7 +140,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 p.fillRect(re, f);
             }
 
-            if(ce.c == COLOR_EMPTY) {
+            if(ct == TOOL_FIELD && ce.c == COLOR_EMPTY) {
                 bool nei = false;
                 if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
                    (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
@@ -135,6 +154,12 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                     p.setPen(Qt::NoPen);
                     p.drawRoundedRect(re, 18, 18);
                 }
+            }
+
+            if((ct == TOOL_FLAG || ct == TOOL_PLAYER) && ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
+                p.setBrush(COLOR_FIELD.darker(110));
+                p.setPen(Qt::NoPen);
+                p.drawRoundedRect(re, 18, 18);
             }
 
             if(ce.ti == TYPE_PLAYER || (ce.ti == TYPE_ENEMY && lc == QPoint(x, y))) {
@@ -171,9 +196,10 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                             high = true;
                         }
                     }
-                }
-                else {
-                    high = is_interactive_cell(ct, ce);
+                } else  if(ct == TOOL_FLAG || ct == TOOL_PLAYER) {
+                    if(ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
+                        high = true;
+                    }
                 }
 
                 if(high) {
@@ -280,6 +306,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if(cell.ti == TYPE_ENEMY) {
+            if(!is_connected_after_removal(x, y)) {
+                return;
+            }
+
             cell.ti = TYPE_NONE;
             cell.c  = COLOR_EMPTY;
             if(lc == QPoint(x, y)) {
@@ -338,6 +368,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
         if((r == 1 && c == 2) || (r == 2 && c == 1)) {
             if(cell.ti == TYPE_FIELD) {
+                if(!is_connected_after_removal(x, y)) {
+                    return;
+                }
+
                 cell.ti = TYPE_NONE;
                 cell.c  = COLOR_EMPTY;
                 if(!has_active_cells()) {
@@ -481,4 +515,111 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
         return;
     }
+}
+
+bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
+{
+    QColor  old_c       = cells[ry][rx].c;
+    int32_t old_ti      = cells[ry][rx].ti;
+    cells[ry][rx].c     = COLOR_EMPTY;
+    cells[ry][rx].ti    = TYPE_NONE;
+    QPoint sta(-1, -1);
+    int32_t y, x, count = 0, i, nx, ny, tot = 0;
+    std::queue<QPoint> q;
+    for(    y = 0; y < r; ++y) {
+        for(x = 0; x < c; ++x) {
+            if(cells[y][x].c != COLOR_EMPTY) {
+                sta = QPoint(x, y);
+
+
+                break;
+            }
+        }
+
+        if(sta != QPoint(-1, -1)) {
+            break;
+        }
+    }
+
+    if(sta == QPoint(-1, -1)) {
+        return true;
+    }
+
+    std::vector<std::vector<bool>> visit(r, std::vector<bool>(c, false));
+    q.push(sta);
+    visit[sta.y()][sta.x()] = true;
+    while(!q.empty()) {
+        QPoint cur = q.front(); q.pop();
+        ++count;
+        static const int32_t dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
+        for(i = 0; i < 4; ++i) {
+            nx = cur.x() + dx[i];
+            ny = cur.y() + dy[i];
+            if(nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                if(!visit.at(ny).at(nx) && cells[ny][nx].c != COLOR_EMPTY) {
+                    visit[ny][nx] = true;
+                    q.push(QPoint(nx, ny));
+                }
+            }
+        }
+    }
+
+    for(    y = 0; y < r; ++y) {
+        for(x = 0; x < c; ++x) {
+            if(!(x == rx && y == ry) && cells[y][x].c != COLOR_EMPTY) {
+                ++tot;
+            }
+        }
+    }
+
+    cells[ry][rx].c  = old_c;
+    cells[ry][rx].ti = old_ti;
+
+
+    return count == tot;
+}
+
+std::vector<QPoint> GameFieldWidget::find_shortest_path(QPoint sta, QPoint goal)
+{
+    std::queue<QPoint> q;
+    std::unordered_map<QPoint, QPoint> par;
+    std::vector<std::vector<bool>> visit(r, std::vector<bool>(c, false));
+    q.push(sta);
+    visit[sta.y()][sta.x()] = true;
+    static const int32_t dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
+    int32_t i, nx, ny;
+    while(!q.empty()) {
+        QPoint cur = q.front(); q.pop();
+        if(cur == goal) {
+            break;
+        }
+
+        for(i = 0; i < 4; ++i) {
+            nx = cur.x() + dx[i];
+            ny = cur.y() + dy[i];
+            if(nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                if(!visit.at(ny).at(nx) && cells[ny][nx].c != COLOR_EMPTY) {
+                    visit[ny][nx] = true;
+                    QPoint next(nx, ny);
+                    par[next] = cur;
+                    q.push(next);
+                }
+            }
+        }
+    }
+
+    std::vector<QPoint> path;
+    if(!par.count(goal)) {
+        return path;
+    }
+
+    for(QPoint cur = goal; cur != sta; cur = par[cur]) {
+        path.push_back(cur);
+    }
+
+    path.push_back(sta);
+    std::reverse(path.begin(), path.end());
+
+
+    return path;
 }

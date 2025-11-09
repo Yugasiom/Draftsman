@@ -8,6 +8,9 @@
 #include <cstdint>
 
 
+#include <vector>
+
+
 #include <QPoint>
 #include <QColor>
 #include <QWidget>
@@ -69,7 +72,7 @@ class GameFieldWidget : public QWidget
                      bool           fcp    = false                                  ;
 
 
-                     Cell           cells[max_r][max_c]                             ;
+    std::vector<std::vector<Cell>>  cells                                           ;
                      int16_t        r      = 5, c = 5, ct = 1                       ;
                      QPoint         h      {-1, -1}  , lc    {-1, -1}               ;
 
@@ -79,6 +82,8 @@ class GameFieldWidget : public QWidget
                      void           handle_click       (int16_t , int16_t    )      ;
                      bool           has_active_cells   (                     ) const;
                      bool           is_interactive_cell(uint16_t, const Cell&) const;
+                     bool           is_connected_after_removal(int16_t, int16_t)    ;
+                std::vector<QPoint> find_shortest_path        (QPoint , QPoint )    ;
 
     protected:
                      void           leaveEvent         (QEvent*           ) override;
