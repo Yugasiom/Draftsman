@@ -20,23 +20,23 @@
 
 
 
-#define WHITE         QColor(255, 255, 255)
+#define WHITE         QColor(200, 220, 220)
 #define GRAY          QColor(130, 130, 130)
 #define DARK_GRAY     QColor(060, 060, 060)
 #define ORANGE        QColor(255, 140, 000)
 #define PURPLE        QColor(160, 032, 240)
 
 
-#define TOOL_FIELD   1
-#define TOOL_FLAG    2
-#define TOOL_PLAYER  3
+#define TOOL_FIELD           001
+#define TOOL_FLAG            002
+#define TOOL_PLAYER          003
 
 
-#define TYPE_NONE    0
-#define TYPE_FIELD   1
-#define TYPE_ENEMY   2
-#define TYPE_PLAYER  3
-#define TYPE_FLAG    4
+#define TYPE_NONE            000
+#define TYPE_FIELD           001
+#define TYPE_ENEMY           002
+#define TYPE_PLAYER          003
+#define TYPE_FLAG            004
 
 
 #define COLOR_FIELD   WHITE

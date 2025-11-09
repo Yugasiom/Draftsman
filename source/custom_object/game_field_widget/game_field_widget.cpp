@@ -35,7 +35,7 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
 void GameFieldWidget::set_size(int16_t nr, int16_t nc)
 {
     cells.assign(max_r, std::vector<Cell>(max_c));
-    int16_t y, x, cs = std::min(width()    / c, height() / r)       ;
+    int16_t y, x, cs = std::min(width() / c, height() / r);
     float hp = 0.75;
     r = qBound(int16_t(1), nr, max_r);
     c = qBound(int16_t(1), nc, max_c);
@@ -64,6 +64,7 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
 void GameFieldWidget::set_current_tool(int32_t ti)
 {
     ct = ti;
+    update();
 }
 
 void GameFieldWidget::resizeEvent(QResizeEvent *e)
@@ -156,7 +157,8 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 }
             }
 
-            if((ct == TOOL_FLAG || ct == TOOL_PLAYER) && ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
+            if((ct == TOOL_FLAG || ct == TOOL_PLAYER || ct == TOOL_FIELD) &&
+                ce.c != COLOR_EMPTY   && ce.ti       == TYPE_FIELD)       {
                 p.setBrush(COLOR_FIELD.darker(110));
                 p.setPen(Qt::NoPen);
                 p.drawRoundedRect(re, 18, 18);
@@ -256,8 +258,8 @@ void GameFieldWidget::mousePressEvent(QMouseEvent *e)
 {
     QPoint pos = e->pos();
     int16_t cs  = std::min(width()    / c, height() / r), x, y,
-            ox  = (width()  - cs * c) / 2,
-            oy  = (height() - cs * r) / 2;
+        ox  = (width()  - cs * c) / 2,
+        oy  = (height() - cs * r) / 2;
     QRect fieldr(ox, oy, cs * c, cs * r);
     if(  !fieldr.contains(pos)) {
         return;
@@ -284,9 +286,9 @@ void GameFieldWidget::mouseReleaseEvent(QMouseEvent *)
 {
     md = 0;
     bool ko =
-              lc.y() >= 0 && lc.x() >= 0 &&
-              lc.y() <  r && lc.x() <  c &&
-              cells[lc.y()][lc.x()].ti   == TYPE_ENEMY;
+        lc.y() >= 0 && lc.x() >= 0 &&
+        lc.y() <  r && lc.x() <  c &&
+        cells[lc.y()][lc.x()].ti   == TYPE_ENEMY;
     if(!ko) {
         lc = {-1, -1};
     }
@@ -343,7 +345,7 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
             if(!fcp) {
                 cell.c  = COLOR_FIELD;
                 cell.ti = TYPE_FIELD;
-                    fcp = true;
+                fcp = true;
 
 
                 return;
@@ -351,9 +353,9 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
             bool hn = false;
             if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
-               (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
-               (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
-               (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
+                (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
+                (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
+                (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
                 hn = true;
             }
 
