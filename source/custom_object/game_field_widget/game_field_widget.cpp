@@ -11,11 +11,14 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
 {
     setMouseTracking(true);
     set_size(r, c);
+    flag_pix.load(":/icon/source/icon/flag.png");
+    sel_pix.load(":/icon/source/icon/shape.png");
 }
 
 void GameFieldWidget::set_size(int16_t nr, int16_t nc)
 {
-    int16_t y, x;
+    int16_t y, x, cs = std::min(width()    / c, height() / r)       ;
+    float hp = 0.75;
     r = qBound(int16_t(1), nr, max_r);
     c = qBound(int16_t(1), nc, max_c);
     if(r == 1 && c == 1) {
@@ -30,12 +33,23 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
         }
     }
 
+    sca_flag = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    sca_sel  = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     update();
 }
 
 void GameFieldWidget::set_current_tool(int32_t ti)
 {
     ct = ti;
+}
+
+void GameFieldWidget::resizeEvent(QResizeEvent *e)
+{
+    QWidget::resizeEvent(e);
+    int16_t cs = std::min(width() / c, height()     / r);
+    float hp = 0.75;
+    sca_flag = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    sca_sel  = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 void GameFieldWidget::paintEvent(QPaintEvent*)
@@ -58,32 +72,18 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 f = COLOR_FIELD;
             }
 
-            if(       ce.ti == 4 && ce.c == COLOR_FIELD) {
-                QImage flag(":/icon/source/icon/flag.png");
-                float hc = 0.75;
-                if(!flag.isNull()) {
-                    p.fillRect(re, ce.c);
-                    QSize tars(re.width() * hc, re.height() * hc);
-                    QImage sca = flag.scaled(tars, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                    QPoint cent = re.center() - QPoint(sca.width() / 2, sca.height() / 2);
-                    QRect tarr(cent, sca.size());
-                    p.drawImage(tarr, sca);
-                } else {
-                    p.fillRect(re, ce.c);
-                }
+            if(ce.ti == TYPE_FLAG   && ce.c == COLOR_FIELD) {
+                p.fillRect(re, ce.c);
+                QPoint cent = re.center() - QPoint(sca_flag.width()  / 2,
+                                                   sca_flag.height() / 2);
+                QRect tarr(cent, sca_flag.size());
+                p.drawPixmap(tarr, sca_flag);
             } else if(ce.ti == 2) {
-                QImage sel(":/icon/source/icon/shape.png");
-                float hc = 0.75;
-                if(!sel.isNull()) {
-                    p.fillRect(re, COLOR_FIELD);
-                    QSize tars(re.width() * hc, re.height() * hc);
-                    QImage sca = sel.scaled(tars, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-                    QPoint cent = re.center() - QPoint(sca.width() / 2, sca.height() / 2);
-                    QRect tarr(cent, sca.size());
-                    p.drawImage(tarr, sca);
-                } else {
-                    p.fillRect(re, COLOR_FIELD);
-                }
+                p.fillRect(re, COLOR_FIELD);
+                QPoint cent = re.center() - QPoint(sca_sel.width()   / 2,
+                                                   sca_sel.height()  / 2);
+                QRect tarr(cent, sca_sel.size());
+                p.drawPixmap(tarr, sca_sel);
             } else {
                 p.fillRect(re, f);
             }
