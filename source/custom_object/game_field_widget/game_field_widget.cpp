@@ -26,15 +26,19 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
         c = 2;
     }
 
-    for(y = 0; y < max_r; ++y) {
+    for(    y = 0; y < max_r; ++y) {
         for(x = 0; x < max_c; ++x) {
             cells[y][x].ti     = 0;
             cells[y][x].c      = COLOR_EMPTY;
         }
     }
 
-    sca_flag = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    sca_sel  = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    fcp       = false;
+    h         = QPoint(-1,-1);
+    lc        = QPoint(-1,-1);
+
+    sca_flag  = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    sca_sel   = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     update();
 }
 
@@ -50,6 +54,35 @@ void GameFieldWidget::resizeEvent(QResizeEvent *e)
     float hp = 0.75;
     sca_flag = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     sca_sel  = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+}
+
+bool GameFieldWidget::has_active_cells() const
+{
+    int16_t yy, xx;
+    for(yy = 0; yy < r; ++yy) {
+        for(xx = 0; xx < c; ++xx) {
+            if(cells[yy][xx].c != COLOR_EMPTY) {
+                return true;
+            }
+        }
+    }
+
+
+    return false;
+}
+
+bool GameFieldWidget::is_interactive_cell(uint16_t tool, const Cell &cell) const
+{
+    switch(tool) {
+        case TOOL_FIELD:
+            return (cell.c == COLOR_EMPTY || cell.ti == TYPE_FIELD);
+        case TOOL_FLAG:
+            return (cell.c != COLOR_EMPTY);
+        case TOOL_PLAYER:
+            return (cell.ti == TYPE_FIELD || cell.ti == TYPE_FLAG || cell.ti == TYPE_ENEMY);
+        default:
+            return false;
+    }
 }
 
 void GameFieldWidget::paintEvent(QPaintEvent*)
@@ -88,6 +121,22 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 p.fillRect(re, f);
             }
 
+            if(ce.c == COLOR_EMPTY) {
+                bool nei = false;
+                if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
+                   (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
+                   (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
+                   (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
+                    nei = true;
+                }
+
+                if(!fcp || nei) {
+                    p.setBrush(COLOR_FIELD.darker(130));
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(re, 18, 18);
+                }
+            }
+
             if(ce.ti == TYPE_PLAYER || (ce.ti == TYPE_ENEMY && lc == QPoint(x, y))) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
 
@@ -105,9 +154,32 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 p.restore();
             }
 
-            if((ct == 1 || ct == 2 || ct == 3) && h == QPoint(x, y) && !md) {
-                if(ct == 1 || ce.c == COLOR_FIELD || ce.c == COLOR_PLAYER) {
-                    p.fillRect(re, COLOR_HOVER);
+            if((ct == TOOL_FIELD || ct == TOOL_FLAG || ct == TOOL_PLAYER) && h == QPoint(x, y) && !md) {
+                bool high = false;
+                if(ct == TOOL_FIELD) {
+                    if(!fcp) {
+                        high = (ce.c == COLOR_EMPTY);
+                    } else {
+                        if(ce.c == COLOR_EMPTY) {
+                            if((y >   0    && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
+                               (y < r - 1  && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
+                               (x >   0    && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
+                               (x < c - 1  && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
+                                high = true;
+                            }
+                        } else {
+                            high = true;
+                        }
+                    }
+                }
+                else {
+                    high = is_interactive_cell(ct, ce);
+                }
+
+                if(high) {
+                    p.setBrush(COLOR_HOVER);
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(re, 9, 9);
                 }
             }
         }
@@ -123,11 +195,16 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
 void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
 {
     QPoint pos = e->pos();
-    int16_t cs = std::min(width() / c, height() / r),
+    int16_t cs = std::min(width() /  c, height() / r), x, y,
             ox = (        width() - cs  * c   ) / 2 ,
-            oy = (       height() - cs  * r   ) / 2 ,
-             x = (        pos.x() - ox) / cs,
-             y = (        pos.y() - oy) / cs;
+            oy = (       height() - cs  * r   ) / 2 ;
+    QRect fieldr(ox, oy,       cs *  c, cs * r);
+    if(  !fieldr.contains(pos)) {
+        return;
+    }
+
+    x          = (pos.x() - ox)   / cs;
+    y          = (pos.y() - oy)   / cs;
     if(x >= 0 && x < c && y >= 0 && y < r) {
         QRect cellRect(ox + x * cs, oy + y * cs, cs, cs);
         if(cellRect.contains(pos)) {
@@ -151,11 +228,17 @@ void GameFieldWidget::mouseMoveEvent(QMouseEvent *e)
 
 void GameFieldWidget::mousePressEvent(QMouseEvent *e)
 {
-    int16_t cs  = std::min(width()    / c, height() / r),
+    QPoint pos = e->pos();
+    int16_t cs  = std::min(width()    / c, height() / r), x, y,
             ox  = (width()  - cs * c) / 2,
-            oy  = (height() - cs * r) / 2,
-            x   = (e->pos().x() - ox) / cs,
-            y   = (e->pos().y() - oy) / cs;
+            oy  = (height() - cs * r) / 2;
+    QRect fieldr(ox, oy, cs * c, cs * r);
+    if(  !fieldr.contains(pos)) {
+        return;
+    }
+
+    x           = (pos.x() - ox) / cs;
+    y           = (pos.y() - oy) / cs;
     if(x >= 0 && x < c && y >= 0 && y < r) {
         md = 1;
         handle_click(x, y);
@@ -203,6 +286,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
                 lc = {-1, -1};
             }
 
+            if(!has_active_cells()) {
+                fcp = false;
+            }
+
 
             return;
         }
@@ -223,8 +310,27 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if( cell.c == COLOR_EMPTY) {
-            cell.c  = COLOR_FIELD;
-            cell.ti = TYPE_FIELD;
+            if(!fcp) {
+                cell.c  = COLOR_FIELD;
+                cell.ti = TYPE_FIELD;
+                    fcp = true;
+
+
+                return;
+            }
+
+            bool hn = false;
+            if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
+               (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
+               (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
+               (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
+                hn = true;
+            }
+
+            if(hn) {
+                cell.c  = COLOR_FIELD;
+                cell.ti = TYPE_FIELD;
+            }
 
 
             return;
@@ -234,6 +340,9 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
             if(cell.ti == TYPE_FIELD) {
                 cell.ti = TYPE_NONE;
                 cell.c  = COLOR_EMPTY;
+                if(!has_active_cells()) {
+                    fcp = false;
+                }
             }
 
 
