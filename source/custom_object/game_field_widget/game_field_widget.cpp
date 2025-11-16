@@ -625,3 +625,86 @@ std::vector<QPoint> GameFieldWidget::find_shortest_path(QPoint sta, QPoint goal)
 
     return path;
 }
+
+QPoint GameFieldWidget::find_player() const
+{
+    int32_t  yy, xx;
+    for(     yy = 0; yy < r; ++yy) {
+        for( xx = 0; xx < c; ++xx) {
+            if(cells[yy][xx].ti == TYPE_PLAYER) {
+                return QPoint(xx, yy);
+            }
+        }
+    }
+
+
+    return QPoint(-1, -1);
+}
+
+uint16_t GameFieldWidget::count_enemies() const
+{
+    int32_t cnt = 0, yy, xx;
+    for(    yy = 0; yy < r; ++yy) {
+        for(xx = 0; xx < c; ++xx) {
+            if(cells[yy][xx].ti == TYPE_ENEMY) {
+                ++cnt;
+            }
+        }
+    }
+
+
+    return cnt;
+}
+
+void GameFieldWidget::move_player(int32_t dx, int32_t dy)
+{
+    QPoint p = find_player();
+    if(p.y() < 0) {
+        return;
+    }
+
+    int32_t nx = p.x() + dx,
+            ny = p.y() + dy;
+    if(nx < 0 || nx >= c || ny < 0 || ny >= r) {
+        return;
+    }
+
+    cells[p.y()][p.x()].ti = TYPE_FIELD;
+    cells[ny][nx].ti = TYPE_PLAYER;
+    this->update();
+}
+
+bool GameFieldWidget::move_player_step(int32_t dx, int32_t dy)
+{
+    QPoint p = find_player();
+    if(p.y() < 0) {
+        return false;
+    }
+
+    int32_t nx = p.x() + dx,
+            ny = p.y() + dy;
+    if(nx < 0 || nx >= c || ny < 0 || ny >= r) {
+        return false;
+    }
+
+    bool hf = (cells[ny][nx].ti == TYPE_FLAG);
+    cells[p.y()][p.x()].ti = TYPE_FIELD;
+    cells[ny][nx].ti = TYPE_PLAYER;
+    this->update();
+
+
+    return hf;
+}
+
+void GameFieldWidget::paint_under_player()
+{
+    QPoint p = find_player();
+    if(p.y() < 0) {
+        return;
+    }
+
+    Cell &cell = cells[p.y()][p.x()];
+    cell.c = COLOR_FIELD;
+    cell.ti = TYPE_PLAYER;
+    update();
+}

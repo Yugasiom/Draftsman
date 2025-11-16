@@ -13,6 +13,7 @@
 #include <QPainter>
 #include <QTextEdit>
 #include <QKeyEvent>
+#include <QMimeData>
 #include <QTextBlock>
 #include <QScrollBar>
 #include <QScrollBar>

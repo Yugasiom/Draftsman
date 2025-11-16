@@ -158,8 +158,10 @@ void ResizablePlainTextEdit::handle_text_changed()
 
 void ResizablePlainTextEdit::insertFromMimeData(const QMimeData *s)
 {
-               apply_font_format();
-    QTextEdit::insertFromMimeData(s);
+    apply_font_format();
+    QString      t = s->text();
+    QTextCursor  c = textCursor();
+    c.insertText(t, c.charFormat());
 }
 
 uint16_t ResizablePlainTextEdit::calculate_font_size() const
