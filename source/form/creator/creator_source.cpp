@@ -4,317 +4,276 @@
 
 
 
+void Creator::on_Play_clicked()
+{
+    // сохраняем поле всегда
+    field_save();
+
+    // проверка поля
+    QString m = check_missing_elements();
+    if(!validate_before_run()) {
+        show_missing_window(m);
+        return; // не запускаем
+    }
+
+    // проверка кода
+    QStringList lin = ui->Code->toPlainText().split('\n', Qt::SkipEmptyParts);
+    if(!validate_program(lin)) {
+        return; // не запускаем
+    }
+
+    // запуск только если всё корректно
+    plan       = build_plan(lin);
+    plan_index = 0;
+    step_made  = 0;
+    game_ended = false;
+    reach_flag = false;
+    ene_init   = f->count_enemies();
+
+    if(!com_timer) {
+        com_timer = new QTimer(this);
+        connect(com_timer, &QTimer::timeout, this, &Creator::executeNextCommand);
+    }
+
+    com_timer->start(275);
+}
+
+
 bool Creator::validate_before_run() const
 {
-    int32_t act = 0, play = 0, flags = 0,
-            y      , x                  ;
+    int32_t act = 0, flags = 0, y, x;
     for(y = 0; y < f->rows(); ++y) {
         for(x = 0; x < f->cols(); ++x) {
             const auto &cell = f->get_cells()[y][x];
-            if(cell.c != COLOR_EMPTY) {
-                act++;
-            }
-
-            if(cell.ti == TYPE_PLAYER) {
-                play++;
-            }
-
-            if(cell.ti == TYPE_FLAG) {
-                flags++;
-            }
+            if(cell.c != COLOR_EMPTY) act++;
+            if(cell.ti == TYPE_FLAG) flags++;
         }
     }
-
-
-    return (act >= 2 && play == 1 && flags >= 1);
+    QPoint pp = f->find_player();
+    bool hasPlayer = (pp.x() >= 0 && pp.y() >= 0);
+    return (act >= 2 && hasPlayer && flags >= 1);
 }
 
 
 int32_t Creator::default_steps_by_case(const QString &w) const
 {
-        bool  hu  = false, hl = false;
-    for(QChar ch  : w) {
-              hu |= ch.isUpper();
-              hl |= ch.isLower();
+    bool hu = false, hl = false;
+    for(QChar ch : w) {
+        hu |= ch.isUpper();
+        hl |= ch.isLower();
     }
-
-
-    return (hu && !hl) ? 9 : 1;
+    return (hu && !hl) ? 8 : 1;
 }
 
 
-int32_t Creator::parse_steps(const QString &line, const QString &key) const
+int32_t Creator::parse_steps(const QString &line, const QString &key)
 {
-    QRegularExpression re(R"(\b)" + QRegularExpression::escape(key) + R"(\b\s*(\d+)?)",
+    // проверяем, есть ли скобки
+    bool hasParens = line.contains("(") && line.contains(")");
+
+    // проверяем регистр
+    bool allUpper = true, hasLower = false;
+    for(QChar ch : line) {
+        if(ch.isLower()) hasLower = true;
+        if(ch.isLetter() && ch.isLower()) allUpper = false;
+    }
+
+    // если оператор в верхнем регистре и есть скобки → ошибка
+    if(allUpper && !hasLower && hasParens) {
+        show_missing_window("Ошибка: для операторов в верхнем регистре скобки запрещены");
+        return 0;
+    }
+
+    // обычная обработка для нижнего регистра
+    QRegularExpression re(QRegularExpression::escape(key) + R"(\s*\((\d+)\))",
                           QRegularExpression::CaseInsensitiveOption);
     auto m = re.match(line);
     if(!m.hasMatch()) {
-        return 1;
+        if(hasParens) {
+            show_missing_window("Ошибка: внутри скобок должно быть число от 1 до 8");
+            return 0;
+        }
+        return default_steps_by_case(line);
     }
 
-    auto num = m.captured(1);
-    if(num.isEmpty()) {
-        return default_steps_by_case(m.captured(0));
+    int32_t s = m.captured(1).toInt();
+    if(s < 1 || s > 8) {
+        show_missing_window("Ошибка: число в скобках должно быть от 1 до 8");
+        return 0;
     }
 
-    int32_t s = num.toInt();
-
-
-    return qBound(1, s, 9);
+    return s;
 }
 
 
-Command Creator::parse_line(const QString &line) const
+Command Creator::parse_line(const QString &line)
 {
     QString s = line.trimmed();
     if(s.isEmpty()) {
         return {CmdType::UNKNOWN, line, 0, 0, 0, 0, QString()};
     }
 
+    // комментарии и любой текст — игнорируем
     if(s.startsWith("(") && s.endsWith(")")) {
         return {CmdType::UNKNOWN, line, 0, 0, 0, 0, QString()};
     }
 
-    QString S = s.toUpper();
     int32_t steps;
-    if(S.startsWith("ВПРАВО")) {
+    if(s.startsWith("вправо", Qt::CaseInsensitive)) {
         steps = parse_steps(s, "вправо");
         return {CmdType::MOVE, line, +1, 0, steps, 0, QString()};
     }
-
-    if(S.startsWith("ВЛЕВО")) {
+    if(s.startsWith("влево", Qt::CaseInsensitive)) {
         steps = parse_steps(s, "влево");
         return {CmdType::MOVE, line, -1, 0, steps, 0, QString()};
     }
-
-    if(S.startsWith("ВВЕРХ")) {
+    if(s.startsWith("вверх", Qt::CaseInsensitive)) {
         steps = parse_steps(s, "вверх");
         return {CmdType::MOVE, line, 0, -1, steps, 0, QString()};
     }
-
-    if(S.startsWith("ВНИЗ")) {
+    if(s.startsWith("вниз", Qt::CaseInsensitive)) {
         steps = parse_steps(s, "вниз");
         return {CmdType::MOVE, line, 0, +1, steps, 0, QString()};
     }
-
-    if(S.startsWith("КРАСИТЬ")) {
+    if(s.startsWith("красить", Qt::CaseInsensitive)) {
         return {CmdType::PAINT, line, 0, 0, 0, 0, QString()};
     }
 
-    if(S.startsWith("ЦИКЛ")) {
-        QRegularExpression re(R"(цикл\s+(\d+))", QRegularExpression::CaseInsensitiveOption);
-        auto m = re.match(s);
-        int32_t k = m.hasMatch() ? qBound(1, m.captured(1).toInt(), 9) : 1;
-        return {CmdType::BLOCK_LOOP, line, 0, 0, 0, k, QString()};
-    }
-
-    if(S.startsWith("ЕСЛИ")) {
-        int32_t pos = S.indexOf("ТО");
-        QString cond = (pos > 0 ? s.left(pos).mid(QString("если").size()).trimmed() : QString());
-        return {CmdType::BLOCK_IF, line, 0, 0, 0, 0, cond};
-    }
-
-    if(S == "ТОЧКА") {
-        return {CmdType::BLOCK_END, line, 0, 0, 0, 0, QString()};
-    }
-
-        return {CmdType::UNKNOWN, line, 0, 0, 0, 0, QString()};
+    // всё остальное игнорируем
+    return {CmdType::UNKNOWN, line, 0, 0, 0, 0, QString()};
 }
 
 
-QVector<Command> Creator::build_plan(const QStringList &lines) const
+QVector<Command> Creator::build_plan(const QStringList &lines)
 {
-    QVector<Command> out, stack, buff;
-    auto fbto = [&](const QVector<Command> &buf) {
-        for(const auto &cmd : buf) {
-            out.push_back(cmd);
+    QVector<Command> out;
+    auto emit_single_move = [&](const Command &mv) {
+        int count = std::max<int>(1, mv.steps);
+        for (int i = 0; i < count; ++i) {
+            Command one = mv;
+            one.steps = 1;
+            out.push_back(one);
         }
     };
 
-    for(const auto &line : lines) {
+    for (const auto &line : lines) {
         Command cmd = parse_line(line);
-        if(cmd.type == CmdType::BLOCK_LOOP) {
-            stack.push_back(cmd);
-            buff.clear();
-
-
-            continue;
-        }
-
-        if(cmd.type == CmdType::BLOCK_IF) {
-            stack.push_back(cmd);
-            buff.clear();
-
-
-            continue;
-        }
-
-        if(cmd.type == CmdType::BLOCK_END) {
-            if(stack.isEmpty()) {
-                continue;
-            }
-
-            auto blk = stack.takeLast();
-            if(blk.type == CmdType::BLOCK_LOOP) {
-                int32_t i;
-                for(i = 0; i < blk.loop_count; ++i) {
-                    fbto(buff);
-                }
-            } else if(blk.type == CmdType::BLOCK_IF) {
-                if(eval_condition(blk.condition)) {
-                    fbto(buff);
-                }
-            }
-
-            buff.clear();
-
-
-            continue;
-        }
-
-        if(stack.isEmpty()) {
-            out.push_back(cmd);
+        if (cmd.type == CmdType::UNKNOWN) continue;
+        if (cmd.type == CmdType::MOVE) {
+            emit_single_move(cmd);
         } else {
-            buff.push_back(cmd);
+            out.push_back(cmd);
         }
     }
-
-
     return out;
 }
 
 
-bool Creator::eval_condition(const QString &cond) const
+bool Creator::validate_program(const QStringList &lines)
 {
-    QString c = cond.trimmed().toLower();
-    if(c.isEmpty()) {
-        return false;
-    }
+    for (const auto &raw : lines) {
+        QString s = raw.trimmed();
+        if(s.isEmpty()) continue;
 
-    if(c.contains("enemy_exists")) {
-        return f->count_enemies() > 0;
-    }
+        if (s.startsWith("вправо", Qt::CaseInsensitive) ||
+            s.startsWith("влево",  Qt::CaseInsensitive) ||
+            s.startsWith("вверх",  Qt::CaseInsensitive) ||
+            s.startsWith("вниз",   Qt::CaseInsensitive)) {
 
-    if(c.contains("not_enemy_exists")) {
-        return f->count_enemies() == 0;
-    }
+            // 1) Запрет скобок для ВЕРХНЕГО регистра
+            bool allUpper = true, hasLower = false;
+            for (QChar ch : s) {
+                if (ch.isLower()) { hasLower = true; allUpper = false; }
+                else if (ch.isLetter() && ch.isUpper()) { /* keep */ }
+            }
+            bool hasParens = s.contains("(") || s.contains(")");
+            if (allUpper && !hasLower && hasParens) {
+                show_missing_window("Ошибка: для операторов в верхнем регистре скобки запрещены");
+                return false;
+            }
 
-    if(c.contains("on_flag")) {
-        QPoint p = f->find_player();
-        if(p.y() < 0) {
-            return false;
+            // 2) Если есть скобки, но формат не совпал → ошибка
+            QRegularExpression re(
+                R"((?:вправо|влево|вверх|вниз)\s*\((?<num>\d+)\))",
+                QRegularExpression::CaseInsensitiveOption
+                );
+            auto m = re.match(s);
+
+            if (hasParens && !m.hasMatch()) {
+                show_missing_window("Ошибка: внутри скобок должно быть число от 1 до 8");
+                return false;
+            }
+
+            // 3) Если формат совпал, проверяем диапазон
+            if (m.hasMatch()) {
+                bool ok = false;
+                int n = m.captured("num").toInt(&ok);
+                if (!ok || n < 1 || n > 8) {
+                    show_missing_window("Ошибка: число после оператора движения должно быть от 1 до 8");
+                    return false;
+                }
+            }
         }
-
-
-        return f->get_cells()[p.y()][p.x()].ti == TYPE_FLAG;
-    }
-    if(c.contains("under_painted")) {
-        QPoint p = f->find_player();
-        if(p.y() < 0) {
-            return false;
+        else if(s.startsWith("красить", Qt::CaseInsensitive)) {
+            continue; // допустимая команда
         }
-
-
-        return f->get_cells()[p.y()][p.x()].c == COLOR_FIELD;
-    }
-
-
-    return false;
-}
-
-
-void Creator::on_Play_clicked()
-{
-    QString m = check_missing_elements();
-    if(!validate_before_run()) {
-        show_missing_window(m);
-
-
-        return;
-    }
-
-    QStringList lines = ui->Code->toPlainText().split('\n', Qt::SkipEmptyParts),
-          clean_lines                                                          ;
-    QString s, S                                                               ;
-    int32_t i                                                                  ;
-    for(i = 0; i < lines.size(); ++i) {
-        s = lines.at(i).trimmed();
-        if(s.isEmpty()) {
-            continue;
-        }
-
-        if(s.startsWith("(") && s.endsWith(")")) {
-            clean_lines.push_back(s);
-
-
-            continue;
-        }
-
-        S = s.toUpper();
-        if(S.startsWith("ВПРАВО")   ||
-            S.startsWith("ВЛЕВО")   ||
-            S.startsWith("ВВЕРХ")   ||
-            S.startsWith("ВНИЗ")    ||
-            S.startsWith("КРАСИТЬ") ||
-            S.startsWith("ЕСЛИ")    ||
-            S.startsWith("ЦИКЛ")    ||
-            S == "ТО"               ||
-            S == "ТОЧКА") {
-            clean_lines.push_back(s);
+        else {
+            continue; // мусор игнорируем
         }
     }
-
-    ui->Code->setText(clean_lines.join("\n"));
-    plan          = build_plan(clean_lines);
-    plan_index    = 0;
-    step_made     = 0;
-    game_ended    = false;
-    reach_flag    = false;
-    ene_init      = f->count_enemies();
-    if(!com_timer) {
-        com_timer = new QTimer(this);
-        connect(com_timer, &QTimer::timeout, this, &Creator::executeNextCommand);
-    }
-
-    com_timer->start(250);
+    return true;
 }
 
 
 void Creator::executeNextCommand()
 {
-    if(game_ended || plan_index >= plan.size()) {
+    if (game_ended || plan_index >= plan.size()) {
         com_timer->stop();
         conclude_if_needed();
-
-
         return;
     }
 
     const Command &cmd = plan[plan_index];
-    int32_t i, nx, ny;
-    if(cmd.type == CmdType::MOVE) {
-        for(i = 0; i < cmd.steps; ++i) {
-            QPoint p = f->find_player();
-            nx = p.x() + cmd.dx;
-            ny = p.y() + cmd.dy;
-            if(nx < 0 || nx >= f->cols() || ny < 0 || ny >= f->rows()) {
-                break;
-            }
 
-            bool hf = f->move_player_step(cmd.dx, cmd.dy);
+    if (cmd.type == CmdType::MOVE) {
+        QPoint p = f->find_player();
+        int nx = p.x() + cmd.dx;
+        int ny = p.y() + cmd.dy;
+
+        if (nx >= 0 && nx < f->cols() && ny >= 0 && ny < f->rows()) {
+            const auto &target = f->get_cells()[ny][nx];
+
+            f->move_player_step(cmd.dx, cmd.dy);
             step_made++;
-            if(hf) {
+
+            // Победа уже засчитывается внутри move_player_step при удалении флага
+            if (target.ti == TYPE_FLAG) {
                 reach_flag = true;
                 game_ended = true;
                 com_timer->stop();
                 conclude_if_needed();
-
-
                 return;
             }
+        } else {
+            step_made++;
         }
-    } else if(cmd.type == CmdType::PAINT) {
-        f->paint_under_player();
+    } else if (cmd.type == CmdType::PAINT) {
+        QPoint np = f->find_player();
+        if (np.y() < 0) { ++plan_index; return; }
+
+        auto &cell = f->access_cells()[np.y()][np.x()];
+
+        if (cell.ti == TYPE_ENEMY) {
+            cell.ti = TYPE_FIELD;
+            cell.c  = COLOR_PAINTED;
+            f->update();
+        } else if (cell.ti == TYPE_FLAG) {
+            cell.ti = TYPE_FIELD;
+            f->update();
+        } else if (cell.ti == TYPE_FIELD) {
+            cell.c = COLOR_PAINTED;
+            f->update();
+        }
     }
 
     ++plan_index;
@@ -324,18 +283,24 @@ void Creator::executeNextCommand()
 void Creator::conclude_if_needed()
 {
     if(!reach_flag) {
-        show_result_window(false, false, true);
-
-
+        show_result_window(false, false, true); // проигрыш: не дошёл до флага
+        field_load();
         return;
     }
 
+    // если дошёл до флага → победа
     if(ene_init == 0) {
+        // врагов не было → победа за минимальные шаги
         show_result_window(true, false, false);
+    } else if(f->count_enemies() == 0) {
+        // враги были, но все закрашены → победа
+        show_result_window(false, true, false);
     } else {
-        bool ap = (f->count_enemies() == 0);
-        show_result_window(false, ap, !ap);
+        // враги остались, но флаг достигнут → победа (основное задание не выполнено)
+        show_result_window(false, false, false);
     }
+
+    field_load();
 }
 
 
@@ -349,7 +314,7 @@ void Creator::show_result_window(bool wm, bool wpa, bool lose)
     } else if(wm) {
         m = "Победа: вы помогли роботу добраться до\nфиниша за минимальное количество шагов!!!";
     } else {
-        m = "Победа: основное задание не выполнено...";
+        m = "Победа: основное задание не выполнено,\nно вы помогли роботу добраться до финиша...";
     }
 
     show_missing_window(m);
@@ -358,35 +323,26 @@ void Creator::show_result_window(bool wm, bool wpa, bool lose)
 
 QString Creator::check_missing_elements() const
 {
-    int32_t y, x, act = 0, play = 0, flags = 0;
-    for(    y = 0; y < f->rows(); ++y) {
+    int32_t y, x, act = 0, flags = 0;
+    for(y = 0; y < f->rows(); ++y) {
         for(x = 0; x < f->cols(); ++x) {
             const auto &cell = f->get_cells()[y][x];
-            if(cell.c != COLOR_EMPTY) {
-                act++;
-            }
-
-            if(cell.ti == TYPE_PLAYER) {
-                play++;
-            }
-
-            if(cell.ti == TYPE_FLAG) {
-                flags++;
-            }
+            if(cell.c != COLOR_EMPTY) act++;
+            if(cell.ti == TYPE_FLAG) flags++;
         }
     }
+    QPoint pp = f->find_player();
+    bool hasPlayer = (pp.x() >= 0 && pp.y() >= 0);
 
     QStringList m;
     if(act < 2) {
         m << "На поле нет флага и игрока";
-    } else if(play < 1) {
+    } else if(!hasPlayer) {
         m << "На поле должен быть игрок "
              "и\nстоять на свободной активной клетке";
     } else if(flags < 1) {
         m << "На поле должен стоять хотя бы один флаг";
     }
-
-
     return m.join("\n");
 }
 
@@ -402,12 +358,81 @@ void Creator::show_missing_window(const QString &m)
     QLabel a(m, &d);
     a.setAlignment(Qt::AlignCenter);
     l.addWidget(&a);
-    QDialogButtonBox b(&d);
-    QPushButton *bt = b.addButton("Окей", QDialogButtonBox::AcceptRole);
+    QPushButton b("Хорошо", &d);
+    b.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     l.addWidget(&b);
-    connect(bt, &QPushButton::clicked, &d, &QDialog::accept);
+    QObject::connect(&b, &QPushButton::clicked, &d, &QDialog::accept);
     d.exec();
 }
+
+
+QString Creator::level_save_path() const
+{
+    QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp(); // подняться из build/ в корень проекта
+    dir.mkpath("source/saves/lvls"); // убедиться, что папка существует
+    return dir.filePath("source/saves/lvls/sample.dat");
+}
+
+
+void Creator::field_save()
+{
+    QString path = level_save_path();
+    QFile file(path);
+    if(!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Не удалось открыть файл для записи:" << path;
+        return;
+    }
+
+    QDataStream out(&file);
+    out << f->rows() << f->cols();
+
+    for(int y = 0; y < f->rows(); ++y) {
+        for(int x = 0; x < f->cols(); ++x) {
+            const GameFieldWidget::Cell &cell = f->get_cells()[y][x];
+            out << cell.ti << cell.c;
+        }
+    }
+
+    // Сохраняем позицию игрока отдельно
+    QPoint pp = f->get_player_pos();
+    out << pp.x() << pp.y();
+}
+
+
+void Creator::field_load()
+{
+    QString path = level_save_path();
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Не удалось открыть файл для чтения:" << path;
+        return;
+    }
+
+    QDataStream in(&file);
+    int rows, cols;
+    in >> rows >> cols;
+
+    f->set_size(rows, cols);
+
+    for(int y = 0; y < rows; ++y) {
+        for(int x = 0; x < cols; ++x) {
+            GameFieldWidget::Cell cell;
+            in >> cell.ti >> cell.c;
+            f->set_cell(y, x, cell);
+        }
+    }
+
+    // Загружаем позицию игрока
+    int px, py;
+    if (in.status() == QDataStream::Ok && !in.atEnd()) {
+        in >> px >> py;
+        f->set_player_pos(QPoint(px, py));
+    }
+
+    f->update();
+}
+
 
 
 Creator::Creator(QWidget *parent) :

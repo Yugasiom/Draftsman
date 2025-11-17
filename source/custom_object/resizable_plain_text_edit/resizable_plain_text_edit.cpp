@@ -2,11 +2,7 @@
 
 
 
-thread_local const QStringList o = {
-    "если"   , "то"   , "цикл" , "точка",
-    "вправо" , "влево", "вверх", "вниз" ,
-    "красить"
-};
+thread_local const QStringList o = {"вправо", "влево", "вверх", "вниз", "красить"};
 
 
 
@@ -110,11 +106,15 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
     if(e->key() == Qt::Key_Left      || e->key() == Qt::Key_Right  ||
        e->key() == Qt::Key_Up        || e->key() == Qt::Key_Down   ||
        e->key() == Qt::Key_Backspace || e->key() == Qt::Key_Delete ||
-       e->key() == Qt::Key_Return    || e->key() == Qt::Key_Enter  ||
        e->key() == Qt::Key_Tab       || e->key() == Qt::Key_Escape) {
         QTextEdit::keyPressEvent(e);
 
 
+        return;
+    }
+
+    if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) {
+        insertPlainText("\n");
         return;
     }
 
@@ -159,8 +159,12 @@ void ResizablePlainTextEdit::handle_text_changed()
 void ResizablePlainTextEdit::insertFromMimeData(const QMimeData *s)
 {
     apply_font_format();
-    QString      t = s->text();
-    QTextCursor  c = textCursor();
+    QString t = s->text();
+    // нормализуем переносы строк
+    t.replace("\r\n", "\n");
+    t.replace("\r", "\n");
+
+    QTextCursor c = textCursor();
     c.insertText(t, c.charFormat());
 }
 

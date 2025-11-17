@@ -5,15 +5,19 @@
 
 
 
+#include <QDir>
+#include <QFile>
 #include <QLabel>
 #include <QTimer>
 #include <QVector>
 #include <QDialog>
-#include <QMessageBox>
-#include <QStringList>
-#include <QMainWindow>
 #include <QVBoxLayout>
+#include <QMainWindow>
+#include <QStringList>
+#include <QMessageBox>
+#include <QDataStream>
 #include <QDialogButtonBox>
+#include <QCoreApplication>
 
 
 
@@ -34,11 +38,7 @@ class GameFieldWidget                                                           
 
 
 
-enum class CmdType
-{
-    UNKNOWN,  PAINT     , MOVE                                                              ,
-    BLOCK_IF, BLOCK_LOOP, BLOCK_END                                                        //
-};
+enum class CmdType{UNKNOWN, MOVE, PAINT}                                                    ;
 
 
 
@@ -49,7 +49,7 @@ struct Command
     int32_t  dx  = 0, dy = 0                                                                ,
              steps       = 1                                                                ,
              loop_count  = 0                                                                ;
-    QString  condition                                                                      ;
+    QString  condition   = QString()                                                        ;
 };
 
 
@@ -75,26 +75,30 @@ class Creator : public QMainWindow
         bool             reach_flag               = false                                   ;
 
 
-        Command          parse_line               (const QString&                    ) const;
-        QVector<Command> build_plan               (const QStringList&                ) const;
+        Command          parse_line               (const QString&                          );
+        QVector<Command> build_plan               (const QStringList&                      );
         bool             validate_before_run      (                                  ) const;
         bool             eval_condition           (const QString&                    ) const;
         void             conclude_if_needed       (                                        );
         void             show_result_window       (bool =false   , bool =false, bool =false);
         void             show_missing_window      (const QString&                          );
         int32_t          default_steps_by_case    (const QString&                    ) const;
-        int32_t          parse_steps              (const QString&    , const QString&) const;
+        int32_t          parse_steps              (const QString&    ,       const QString&);
         QString          check_missing_elements   (                                  ) const;
+        bool             validate_program         (const QStringList&                      );
+        QString          level_save_path          (                                  ) const;
 
 
     private slots:
-            void         on_Play_clicked          (                                        );
-            void         executeNextCommand       (                                        );
+        void             on_Play_clicked          (                                        );
+        void             executeNextCommand       (                                        );
 
 
     public:
         explicit         Creator                  (QWidget* =nullptr                       );
                         ~Creator                  (                                        );
+        void             field_save               (                                        );
+        void             field_load               (                                        );
 }                                                                                           ;
 
 

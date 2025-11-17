@@ -675,7 +675,7 @@
             <number>0</number>
            </property>
            <property name="text">
-            <string notr="true">Собственный уровень</string>
+            <string notr="true">Вы перешли по кнопке создания собственного уровня</string>
            </property>
            <property name="textFormat">
             <enum>Qt::TextFormat::RichText</enum>

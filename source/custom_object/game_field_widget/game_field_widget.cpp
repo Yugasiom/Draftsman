@@ -55,6 +55,7 @@ void GameFieldWidget::set_size(int16_t nr, int16_t nc)
     fcp       = false;
     h         = QPoint(-1,-1);
     lc        = QPoint(-1,-1);
+    p_p = QPoint(-1, -1);
 
     sca_flag  = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     sca_sel   = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -79,7 +80,7 @@ void GameFieldWidget::resizeEvent(QResizeEvent *e)
 bool GameFieldWidget::has_active_cells() const
 {
     int16_t yy, xx;
-    for(yy = 0; yy < r; ++yy) {
+    for(    yy = 0; yy < r; ++yy) {
         for(xx = 0; xx < c; ++xx) {
             if(cells[yy][xx].c != COLOR_EMPTY) {
                 return true;
@@ -109,107 +110,123 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
-    int16_t y, x , cs = std::min(width()    / c, height() / r),
-                   ox = (width()  - cs * c) / 2,
-                   oy = (height() - cs * r) / 2;
-    uint16_t  rad, bt = 4;
-    QRect          ou(ox, oy, cs * c, cs * r),
-                   ad = ou.adjusted(bt / 2, bt / 2, -bt / 2, -bt / 2);
+
+    int16_t y, x,
+        cs = std::min(width() / c, height() / r),
+        ox = (width()  - cs * c) / 2,
+        oy = (height() - cs * r) / 2;
+    uint16_t rad, bt = 4;
+    QRect ou(ox, oy, cs * c, cs * r),
+        ad = ou.adjusted(bt / 2, bt / 2, -bt / 2, -bt / 2);
     p.setClipRect(ad);
-    for(y = 0; y < r; ++y) {
-        for(x = 0; x < c; ++x) {
+
+    for (y = 0; y < r; ++y) {
+        for (x = 0; x < c; ++x) {
             QRect re(ox + x * cs, oy + y * cs, cs, cs);
             const Cell &ce = cells[y][x];
-            QColor f = ce.c.isValid() ? ce.c : COLOR_FIELD, b;
-            if(ce.ti == 3) {
-                f = COLOR_FIELD;
-            }
+            QColor f = ce.c.isValid() ? ce.c : COLOR_FIELD;
 
-            if(ce.ti == TYPE_FLAG   && ce.c == COLOR_FIELD) {
+            // Рисуем содержимое клетки
+            if (ce.ti == TYPE_FLAG && ce.c == COLOR_FIELD) {
                 p.fillRect(re, ce.c);
-                QPoint cent = re.center() - QPoint(sca_flag.width()  / 2,
-                                                   sca_flag.height() / 2);
+                QPoint cent = re.center() - QPoint(sca_flag.width() / 2, sca_flag.height() / 2);
                 QRect tarr(cent, sca_flag.size());
                 p.drawPixmap(tarr, sca_flag);
-            } else if(ce.ti == 2) {
+            } else if (ce.ti == TYPE_ENEMY) {
                 p.fillRect(re, COLOR_FIELD);
-                QPoint cent = re.center() - QPoint(sca_sel.width()   / 2,
-                                                   sca_sel.height()  / 2);
+                QPoint cent = re.center() - QPoint(sca_sel.width() / 2, sca_sel.height() / 2);
                 QRect tarr(cent, sca_sel.size());
                 p.drawPixmap(tarr, sca_sel);
             } else {
                 p.fillRect(re, f);
             }
 
-            if(ct == TOOL_FIELD && ce.c == COLOR_EMPTY) {
+            // Подсказки для инструмента "Поле" на пустых клетках (соседи/первая клетка)
+            if (ct == TOOL_FIELD && ce.c == COLOR_EMPTY) {
                 bool nei = false;
-                if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
-                   (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
-                   (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
-                   (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
+                if ((y > 0   && cells[y - 1][x    ].c != COLOR_EMPTY) ||
+                    (y < r-1 && cells[y + 1][x    ].c != COLOR_EMPTY) ||
+                    (x > 0   && cells[y    ][x - 1].c != COLOR_EMPTY) ||
+                    (x < c-1 && cells[y    ][x + 1].c != COLOR_EMPTY)) {
                     nei = true;
                 }
-
-                if(!fcp || nei) {
+                if (!fcp || nei) {
                     p.setBrush(COLOR_FIELD.darker(130));
                     p.setPen(Qt::NoPen);
                     p.drawRoundedRect(re, 18, 18);
                 }
             }
 
-            if((ct == TOOL_FLAG || ct == TOOL_PLAYER || ct == TOOL_FIELD) &&
-                ce.c != COLOR_EMPTY   && ce.ti       == TYPE_FIELD)       {
+            // Затемнение активного поля для всех инструментов
+            if ((ct == TOOL_FLAG || ct == TOOL_PLAYER || ct == TOOL_FIELD) &&
+                ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
                 p.setBrush(COLOR_FIELD.darker(110));
                 p.setPen(Qt::NoPen);
                 p.drawRoundedRect(re, 18, 18);
             }
 
-            if(ce.ti == TYPE_PLAYER || (ce.ti == TYPE_ENEMY && lc == QPoint(x, y))) {
+            // Подсветка выбраного врага (без "двоения": не рисуем, если на клетке стоит игрок)
+            if (ce.ti == TYPE_ENEMY && lc == QPoint(x, y) && QPoint(x, y) != p_p) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
-
-
                 rad = cs / 5;
-
-
                 p.save();
-
-                b = COLOR_PLAYER.darker(130);
+                QColor b = COLOR_PLAYER.darker(130);
                 p.setPen(QPen(b, 5));
                 p.setBrush(COLOR_PLAYER);
                 p.drawRoundedRect(in, rad, rad);
-
                 p.restore();
             }
+        }
+    }
 
-            if((ct == TOOL_FIELD || ct == TOOL_FLAG || ct == TOOL_PLAYER) && h == QPoint(x, y) && !md) {
-                bool high = false;
-                if(ct == TOOL_FIELD) {
-                    if(!fcp) {
-                        high = (ce.c == COLOR_EMPTY);
-                    } else {
-                        if(ce.c == COLOR_EMPTY) {
-                            if((y >   0    && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
-                               (y < r - 1  && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
-                               (x >   0    && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
-                               (x < c - 1  && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
-                                high = true;
-                            }
-                        } else {
-                            high = true;
-                        }
-                    }
-                } else  if(ct == TOOL_FLAG || ct == TOOL_PLAYER) {
-                    if(ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
-                        high = true;
-                    }
-                }
+    // Игрок рисуется отдельно поверх содержимого клеток
+    if (p_p.y() >= 0 && p_p.x() >= 0) {
+        QRect re(ox + p_p.x() * cs, oy + p_p.y() * cs, cs, cs);
+        QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
+        rad = cs / 5;
+        p.save();
+        QColor b = COLOR_PLAYER.darker(130);
+        p.setPen(QPen(b, 5));
+        p.setBrush(COLOR_PLAYER);
+        p.drawRoundedRect(in, rad, rad);
+        p.restore();
+    }
 
-                if(high) {
-                    p.setBrush(COLOR_HOVER);
-                    p.setPen(Qt::NoPen);
-                    p.drawRoundedRect(re, 9, 9);
-                }
+    // Игрок рисуется отдельно поверх содержимого клеток
+    if (p_p.y() >= 0 && p_p.x() >= 0) {
+        QRect re(ox + p_p.x() * cs, oy + p_p.y() * cs, cs, cs);
+        QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
+        rad = cs / 5;
+        p.save();
+        QColor b = COLOR_PLAYER.darker(130);
+        p.setPen(QPen(b, 5));
+        p.setBrush(COLOR_PLAYER);
+        p.drawRoundedRect(in, rad, rad);
+        p.restore();
+    }
+
+    // --- Оранжевая подсветка поверх всего ---
+    if (h.y() >= 0 && h.x() >= 0 && !md) {
+        const Cell &ce = cells[h.y()][h.x()];
+        QRect re(ox + h.x() * cs, oy + h.y() * cs, cs, cs);
+
+        bool highlight = false;
+        if (ce.c != COLOR_EMPTY || (ct == TOOL_FIELD && !fcp)) {
+            highlight = true; // активная клетка всегда подсвечивается
+        } else if (ct == TOOL_FIELD) {
+            // пустая клетка подсвечивается, если соседствует с активной
+            if ((h.y() > 0   && cells[h.y()-1][h.x()].c != COLOR_EMPTY) ||
+                (h.y() < r-1 && cells[h.y()+1][h.x()].c != COLOR_EMPTY) ||
+                (h.x() > 0   && cells[h.y()][h.x()-1].c != COLOR_EMPTY) ||
+                (h.x() < c-1 && cells[h.y()][h.x()+1].c != COLOR_EMPTY)) {
+                highlight = true;
             }
+        }
+
+        if (highlight) {
+            p.setBrush(COLOR_HOVER);
+            p.setPen(Qt::NoPen);
+            p.drawRoundedRect(re, 9, 9);
         }
     }
 
@@ -297,223 +314,121 @@ void GameFieldWidget::mouseReleaseEvent(QMouseEvent *)
 void GameFieldWidget::handle_click(int16_t x, int16_t y)
 {
     Cell &cell = cells[y][x];
-    int16_t xx, yy;
-    if(         ct == TOOL_FIELD) {
-        if(cell.ti == TYPE_ENEMY && lc == QPoint(x, y)) {
-            cell.ti = TYPE_PLAYER;
-            lc = {-1, -1};
 
-
+    // --- Поле ---
+    if (ct == TOOL_FIELD) {
+        if (p_p == QPoint(x, y)) {
+            if (cell.ti == TYPE_ENEMY) {
+                // убираем врага под игроком
+                cell.ti = TYPE_FIELD;
+                cell.c  = COLOR_FIELD;
+                lc = QPoint(-1, -1); // сброс выделения
+                update();
+            } else if (cell.ti == TYPE_FIELD) {
+                // ставим врага под игрока
+                cell.ti = TYPE_ENEMY;
+                lc = QPoint(-1, -1); // НЕ создаём выделение врага под игроком
+                update();
+            }
             return;
         }
-
-        if(cell.ti == TYPE_ENEMY) {
-            if(!is_connected_after_removal(x, y)) {
+        // базовая логика вне игрока
+        if (cell.ti == TYPE_ENEMY) {
+            if (!is_connected_after_removal(x, y)) {
+                // если клетку удалить нельзя — убираем только врага
+                cell.ti = TYPE_FIELD;
+                cell.c  = COLOR_FIELD;
+                if (lc == QPoint(x, y)) lc = {-1, -1};
+                update();
                 return;
             }
-
+            // если удалить можно — убираем клетку целиком
             cell.ti = TYPE_NONE;
             cell.c  = COLOR_EMPTY;
-            if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-            }
-
-            if(!has_active_cells()) {
-                fcp = false;
-            }
-
-
+            if (lc == QPoint(x, y)) lc = {-1, -1};
+            if (!has_active_cells()) fcp = false;
             return;
         }
 
-        if(cell.ti == TYPE_PLAYER) {
-            cell.ti = TYPE_ENEMY;
-            lc = QPoint(x, y);
+        if (cell.ti == TYPE_FLAG) { cell.ti = TYPE_FIELD; return; }
 
-
-            return;
-        }
-
-        if(cell.ti == TYPE_FLAG) {
-            cell.ti = TYPE_FIELD;
-
-
-            return;
-        }
-
-        if( cell.c == COLOR_EMPTY) {
-            if(!fcp) {
+        if (cell.c == COLOR_EMPTY) {
+            if (!fcp) {
                 cell.c  = COLOR_FIELD;
                 cell.ti = TYPE_FIELD;
                 fcp = true;
-
-
                 return;
             }
-
             bool hn = false;
-            if((y >   0   && cells[y - 1][  x  ].c != COLOR_EMPTY)  ||
-                (y < r - 1 && cells[y + 1][  x  ].c != COLOR_EMPTY)  ||
-                (x >   0   && cells[  y  ][x - 1].c != COLOR_EMPTY)  ||
-                (x < c - 1 && cells[  y  ][x + 1].c != COLOR_EMPTY)) {
-                hn = true;
-            }
-
-            if(hn) {
-                cell.c  = COLOR_FIELD;
-                cell.ti = TYPE_FIELD;
-            }
-
-
+            if ((y > 0   && cells[y-1][x].c != COLOR_EMPTY) ||
+                (y < r-1 && cells[y+1][x].c != COLOR_EMPTY) ||
+                (x > 0   && cells[y][x-1].c != COLOR_EMPTY) ||
+                (x < c-1 && cells[y][x+1].c != COLOR_EMPTY)) hn = true;
+            if (hn) { cell.c = COLOR_FIELD; cell.ti = TYPE_FIELD; }
             return;
         }
 
-        if((r == 1 && c == 2) || (r == 2 && c == 1)) {
-            if(cell.ti == TYPE_FIELD) {
-                if(!is_connected_after_removal(x, y)) {
-                    return;
-                }
-
-                cell.ti = TYPE_NONE;
-                cell.c  = COLOR_EMPTY;
-                if(!has_active_cells()) {
-                    fcp = false;
-                }
-            }
-
-
-            return;
-        }
-
-        if(cell.ti == TYPE_FIELD) {
+        // на обычных полях можно ставить врага без ограничений
+        if (cell.ti == TYPE_FIELD) {
             cell.ti = TYPE_ENEMY;
-
-
             return;
         }
-
 
         return;
     }
 
-    if(ct == TOOL_FLAG) {
-        if(cell.c == COLOR_EMPTY) {
-            return;
-        }
-
-        if(cell.ti == TYPE_FLAG) {
-            cell.ti = TYPE_FIELD;
-            if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-            }
-
-
-            return;
-        }
-
-        if((r == 1 && c == 2) || (r == 2 && c == 1)) {
-            for(yy = 0; yy < r; ++yy) {
-                for(xx = 0; xx < c; ++xx) {
-                    if(cells[yy][xx].ti == TYPE_FLAG) {
-                        cells[yy][xx].ti = TYPE_FIELD;
-                    }
-                }
-            }
-        }
-
-        if(cell.ti == TYPE_ENEMY && lc == QPoint(x, y)) {
+    // --- Флаг ---
+    if (ct == TOOL_FLAG) {
+        if (cell.c == COLOR_EMPTY) return;
+        if (cell.ti == TYPE_FLAG) { cell.ti = TYPE_FIELD; if (lc == QPoint(x, y)) lc = {-1, -1}; return; }
+        if (p_p == QPoint(x, y)) {
+            p_p = QPoint(-1, -1);
+            cell.ti = TYPE_FLAG;
             lc = {-1, -1};
-            cell.ti = TYPE_FLAG;
-
-
+            update();
             return;
         }
-
-        if(cell.ti == TYPE_PLAYER) {
-            cell.ti = TYPE_FLAG;
-            if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-            }
-
-
-            return;
-        }
-
-        if(cell.ti == TYPE_ENEMY) {
-            cell.ti = TYPE_FLAG;
-            if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-            }
-
-
-            return;
-        }
-
-        if(cell.ti == TYPE_FIELD) {
-            cell.ti = TYPE_FLAG;
-            if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-            }
-
-
-            return;
-        }
-
-
+        if (cell.ti == TYPE_ENEMY && lc == QPoint(x, y)) { lc = {-1, -1}; cell.ti = TYPE_FLAG; return; }
+        if (cell.ti == TYPE_ENEMY) { cell.ti = TYPE_FLAG; if (lc == QPoint(x, y)) lc = {-1, -1}; return; }
+        if (cell.ti == TYPE_FIELD) { cell.ti = TYPE_FLAG; if (lc == QPoint(x, y)) lc = {-1, -1}; return; }
         return;
     }
 
-    if(ct == TOOL_PLAYER) {
-        if(cell.c == COLOR_EMPTY) {
+    // --- Игрок ---
+    if (ct == TOOL_PLAYER) {
+        if (cell.c == COLOR_EMPTY) return;
+
+        // Сначала обрабатываем “клик по игроку” — убрать игрока, даже если под ним враг/флаг
+        if (p_p == QPoint(x, y)) {
+            p_p = QPoint(-1, -1);
+            update();
             return;
         }
 
-        if((lc == QPoint(x, y)) && cell.ti == TYPE_ENEMY) {
-            lc = {-1, -1};
-
-
+        // Если на клетке враг → ставим игрока на эту клетку (враг остаётся)
+        if (cell.ti == TYPE_ENEMY) {
+            p_p = QPoint(x, y);
+            lc  = QPoint(-1, -1); // на всякий случай снимаем выделение
+            update();
             return;
         }
 
-        if(cell.ti == TYPE_PLAYER) {
+        // Клик по флагу → убрать флаг, поставить игрока
+        if (cell.ti == TYPE_FLAG) {
             cell.ti = TYPE_FIELD;
-            lc = {-1, -1};
-
-
+            p_p = QPoint(x, y);
+            lc  = QPoint(-1, -1);
+            update();
             return;
         }
 
-        for(yy = 0; yy < r; ++yy) {
-            for(xx = 0; xx < c; ++xx) {
-                if(cells[yy][xx].ti == TYPE_PLAYER) {
-                    cells[yy][xx].ti = TYPE_FIELD;
-                }
-            }
-        }
-
-        if(cell.ti == TYPE_FLAG) {
-            cell.ti = TYPE_PLAYER;
-            lc = {-1, -1};
-
-
+        // Клик по активному полю → поставить игрока
+        if (cell.ti == TYPE_FIELD) {
+            p_p = QPoint(x, y);
+            lc  = QPoint(-1, -1);
+            update();
             return;
         }
-
-        if(cell.ti == TYPE_ENEMY) {
-            lc = QPoint(x, y);
-
-
-            return;
-        }
-
-        if(cell.ti == TYPE_FIELD) {
-            cell.ti = TYPE_PLAYER;
-            lc = {-1, -1};
-
-
-            return;
-        }
-
 
         return;
     }
@@ -521,6 +436,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
 bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
 {
+    if (p_p == QPoint(rx, ry)) {
+        return false;
+    }
+
     QColor  old_c       = cells[ry][rx].c;
     int32_t old_ti      = cells[ry][rx].ti;
     cells[ry][rx].c     = COLOR_EMPTY;
@@ -626,21 +545,6 @@ std::vector<QPoint> GameFieldWidget::find_shortest_path(QPoint sta, QPoint goal)
     return path;
 }
 
-QPoint GameFieldWidget::find_player() const
-{
-    int32_t  yy, xx;
-    for(     yy = 0; yy < r; ++yy) {
-        for( xx = 0; xx < c; ++xx) {
-            if(cells[yy][xx].ti == TYPE_PLAYER) {
-                return QPoint(xx, yy);
-            }
-        }
-    }
-
-
-    return QPoint(-1, -1);
-}
-
 uint16_t GameFieldWidget::count_enemies() const
 {
     int32_t cnt = 0, yy, xx;
@@ -656,55 +560,80 @@ uint16_t GameFieldWidget::count_enemies() const
     return cnt;
 }
 
+QPoint GameFieldWidget::find_player() const
+{
+    return p_p.y() >= 0 ? p_p : QPoint(-1, -1);
+}
+
 void GameFieldWidget::move_player(int32_t dx, int32_t dy)
 {
     QPoint p = find_player();
-    if(p.y() < 0) {
+    if (p.y() < 0) return;
+
+    int nx = p.x() + dx, ny = p.y() + dy;
+    if (nx < 0 || nx >= c || ny < 0 || ny >= r) return;
+
+    if (cells[ny][nx].c == COLOR_EMPTY) {
+        penalty++; // копим штраф
         return;
     }
 
-    int32_t nx = p.x() + dx,
-            ny = p.y() + dy;
-    if(nx < 0 || nx >= c || ny < 0 || ny >= r) {
-        return;
-    }
-
-    cells[p.y()][p.x()].ti = TYPE_FIELD;
-    cells[ny][nx].ti = TYPE_PLAYER;
-    this->update();
+    p_p = QPoint(nx, ny);
+    update();
 }
 
 bool GameFieldWidget::move_player_step(int32_t dx, int32_t dy)
 {
     QPoint p = find_player();
-    if(p.y() < 0) {
+    if (p.y() < 0) return false;
+
+    int nx = p.x() + dx, ny = p.y() + dy;
+    if (nx < 0 || nx >= c || ny < 0 || ny >= r) return false;
+
+    if (cells[ny][nx].c == COLOR_EMPTY) {
+        penalty++;
         return false;
     }
 
-    int32_t nx = p.x() + dx,
-            ny = p.y() + dy;
-    if(nx < 0 || nx >= c || ny < 0 || ny >= r) {
-        return false;
+    p_p = QPoint(nx, ny);
+
+    if (cells[ny][nx].ti == TYPE_FLAG) {
+        cells[ny][nx].ti = TYPE_FIELD;
+        update();
+        return true;
     }
 
-    bool hf = (cells[ny][nx].ti == TYPE_FLAG);
-    cells[p.y()][p.x()].ti = TYPE_FIELD;
-    cells[ny][nx].ti = TYPE_PLAYER;
-    this->update();
-
-
-    return hf;
+    update();
+    return false;
 }
 
 void GameFieldWidget::paint_under_player()
 {
     QPoint p = find_player();
-    if(p.y() < 0) {
-        return;
-    }
+    if (p.y() < 0) return;
 
     Cell &cell = cells[p.y()][p.x()];
-    cell.c = COLOR_FIELD;
-    cell.ti = TYPE_PLAYER;
+
+    // если клетка уже закрашена нашим цветом → вернуть обычный цвет поля
+    if (cell.c == COLOR_PAINTED) {
+        cell.c = COLOR_FIELD;
+    } else {
+        // иначе закрасить в наш цвет
+        cell.c = COLOR_PAINTED;
+    }
+
     update();
+}
+
+void GameFieldWidget::remove_enemy_under_player()
+{
+    QPoint p = find_player();
+    if (p.y() < 0) return;
+
+    Cell &cell = cells[p.y()][p.x()];
+    if (cell.ti == TYPE_ENEMY) {
+        cell.ti = TYPE_FIELD;
+        cell.c  = COLOR_PAINTED;
+        update();
+    }
 }

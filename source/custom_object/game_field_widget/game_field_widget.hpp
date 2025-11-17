@@ -22,7 +22,11 @@
 
 #define WHITE         QColor(200, 220, 220)
 #define GRAY          QColor(130, 130, 130)
+
 #define DARK_GRAY     QColor(060, 060, 060)
+
+#define YELLOW        QColor(255, 255, 000)
+
 #define ORANGE        QColor(255, 140, 000)
 #define PURPLE        QColor(160, 032, 240)
 
@@ -41,6 +45,7 @@
 
 #define COLOR_FIELD   WHITE
 #define COLOR_EMPTY   GRAY
+#define COLOR_PAINTED YELLOW
 
 #define COLOR_BORDER  DARK_GRAY
 #define COLOR_HOVER   ORANGE
@@ -53,16 +58,16 @@ class GameFieldWidget : public QWidget
     Q_OBJECT
 
 
+
+    public:
+        struct Cell
+        {
+                     int32_t    ti         = 0                                      ;
+                     QColor     c                                                   ;
+        }                                                                           ;
+
     private:
         static const int16_t        max_r  = 9, max_c = 9                           ;
-
-
-
-                     struct Cell
-                     {
-                         int32_t    ti     = 0                                      ;
-                         QColor     c                                               ;
-                     }                                                              ;
 
 
 
@@ -74,7 +79,7 @@ class GameFieldWidget : public QWidget
 
     std::vector<std::vector<Cell>>  cells     , init_cells                          ;
                      int16_t        r      = 5, c = 5, ct = 1                       ;
-                     QPoint         h      {-1, -1}  , lc    {-1, -1}               ;
+                     QPoint         h{-1, -1} , lc{-1, -1}   , p_p = QPoint(-1, -1) ;
 
 
                      uint16_t       md     = 0                                      ;
@@ -84,6 +89,9 @@ class GameFieldWidget : public QWidget
                      bool           is_interactive_cell(uint16_t, const Cell&) const;
                      bool           is_connected_after_removal(int16_t, int16_t)    ;
                 std::vector<QPoint> find_shortest_path        (QPoint , QPoint )    ;
+
+                     bool game_running = false;
+                     int penalty = 0;
 
     protected:
                      void           leaveEvent         (QEvent*           ) override;
@@ -99,14 +107,14 @@ class GameFieldWidget : public QWidget
 
                      void save_initial_state()
                      {
-                         init_cells = cells;
+                         init_cells = cells                                         ;
                      }
 
                      void reset_state()
                      {
                          if(!init_cells.empty()) {
-                             cells = init_cells;
-                             this->update();
+                             cells = init_cells                                     ;
+                             this->update()                                         ;
                          }
                      }
 
@@ -116,26 +124,50 @@ class GameFieldWidget : public QWidget
                      void           move_player        (int32_t, int32_t  )         ;
                      bool           move_player_step   (int32_t, int32_t  )         ;
                      void           paint_under_player (                  )         ;
+                     void           remove_enemy_under_player  (          )         ;
                      QPoint         find_player        (                  )    const;
                      uint16_t       count_enemies      (                  )    const;
 
 
                      int32_t        rows               (                  )    const
                      {
-                         return r;
+                         return r                                                   ;
                      }
 
                      int32_t        cols               (                  )    const
                      {
-                         return c;
+                         return c                                                   ;
                      }
 
         const std::vector<std::vector<Cell>>& get_cells(                  )    const
                      {
-                         return cells;
+                         return cells                                               ;
                      }
 
-};
+        std::vector<std::vector<Cell>>& access_cells   (                  )
+                     {
+                         return cells                                               ;
+                     }
+
+                     void           set_cell  (int32_t y, int32_t x, const Cell &cel)
+                     {
+                         if(y >= 0 && y < r && x >= 0 && x < c) {
+                             cells[y][x] = cel                                      ;
+                             update()                                               ;
+                         }
+                     }
+
+                     QPoint get_player_pos() const
+                     {
+                         return p_p                                                 ;
+                     }
+
+                     void set_player_pos(QPoint p)
+                     {
+                         p_p = p                                                    ;
+                         update()                                                   ;
+                     }
+}                                                                                   ;
 
 
 
