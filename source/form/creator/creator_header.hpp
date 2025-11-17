@@ -82,6 +82,7 @@ class Creator : public QMainWindow
         void             conclude_if_needed       (                                        );
         void             show_result_window       (bool =false   , bool =false, bool =false);
         void             show_missing_window      (const QString&                          );
+        void             reset_after_game         (                                        );
         int32_t          default_steps_by_case    (const QString&                    ) const;
         int32_t          parse_steps              (const QString&    ,       const QString&);
         QString          check_missing_elements   (                                  ) const;

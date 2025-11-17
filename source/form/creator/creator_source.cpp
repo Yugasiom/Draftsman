@@ -13,16 +13,26 @@ void Creator::on_Play_clicked()
     QString m = check_missing_elements();
     if(!validate_before_run()) {
         show_missing_window(m);
-        return; // не запускаем
+        return; // не запускаем, инструменты остаются включёнными
     }
 
     // проверка кода
     QStringList lin = ui->Code->toPlainText().split('\n', Qt::SkipEmptyParts);
     if(!validate_program(lin)) {
-        return; // не запускаем
+        return; // не запускаем, инструменты остаются включёнными
     }
 
-    // запуск только если всё корректно
+    // --- только если всё корректно ---
+    ui->Field->setEnabled(false);
+    ui->Flag->setEnabled(false);
+    ui->Player->setEnabled(false);
+    ui->Secured->setEnabled(false);
+    ui->Height->setEnabled(false);
+    ui->Width->setEnabled(false);
+
+    f->set_tools_enabled(false);
+
+    // запуск
     plan       = build_plan(lin);
     plan_index = 0;
     step_made  = 0;
@@ -241,18 +251,15 @@ void Creator::executeNextCommand()
         int ny = p.y() + cmd.dy;
 
         if (nx >= 0 && nx < f->cols() && ny >= 0 && ny < f->rows()) {
-            const auto &target = f->get_cells()[ny][nx];
-
-            f->move_player_step(cmd.dx, cmd.dy);
+            bool flagReached = f->move_player_step(cmd.dx, cmd.dy);
             step_made++;
 
-            // Победа уже засчитывается внутри move_player_step при удалении флага
-            if (target.ti == TYPE_FLAG) {
+            if (flagReached) {
                 reach_flag = true;
                 game_ended = true;
                 com_timer->stop();
                 conclude_if_needed();
-                return;
+                return;   // <<< сразу победа
             }
         } else {
             step_made++;
@@ -267,9 +274,23 @@ void Creator::executeNextCommand()
             cell.ti = TYPE_FIELD;
             cell.c  = COLOR_PAINTED;
             f->update();
-        } else if (cell.ti == TYPE_FLAG) {
-            cell.ti = TYPE_FIELD;
-            f->update();
+        } else if (cmd.type == CmdType::PAINT) {
+            QPoint np = f->find_player();
+            if (np.y() < 0) { ++plan_index; return; }
+
+            // просто вызываем paint_under_player
+            f->paint_under_player();
+
+            // если под игроком был флаг → победа
+            auto &cell = f->access_cells()[np.y()][np.x()];
+            if (cell.ti == TYPE_FLAG) {
+                cell.ti = TYPE_FIELD;
+                reach_flag = true;
+                game_ended = true;
+                com_timer->stop();
+                conclude_if_needed();
+                return;
+            }
         } else if (cell.ti == TYPE_FIELD) {
             cell.c = COLOR_PAINTED;
             f->update();
@@ -280,27 +301,49 @@ void Creator::executeNextCommand()
 }
 
 
+void Creator::reset_after_game()
+{
+    ui->Field->setEnabled(true);
+    ui->Flag->setEnabled(true);
+    ui->Player->setEnabled(true);
+    ui->Secured->setEnabled(true);
+    ui->Height->setEnabled(true);
+    ui->Width->setEnabled(true);
+
+    f->set_tools_enabled(true);
+
+    field_load();
+}
+
+
 void Creator::conclude_if_needed()
 {
     if(!reach_flag) {
         show_result_window(false, false, true); // проигрыш: не дошёл до флага
-        field_load();
+        reset_after_game();
+
+
         return;
     }
 
+    const uint16_t ms = 275;
     // если дошёл до флага → победа
     if(ene_init == 0) {
-        // врагов не было → победа за минимальные шаги
-        show_result_window(true, false, false);
+        QTimer::singleShot(ms, this, [this]() {
+            show_result_window(true, false, false);
+            reset_after_game();
+        });
     } else if(f->count_enemies() == 0) {
-        // враги были, но все закрашены → победа
-        show_result_window(false, true, false);
+        QTimer::singleShot(ms, this, [this]() {
+            show_result_window(false, true, false);
+            reset_after_game();
+        });
     } else {
-        // враги остались, но флаг достигнут → победа (основное задание не выполнено)
-        show_result_window(false, false, false);
+        QTimer::singleShot(ms, this, [this]() {
+            show_result_window(false, false, false);
+            reset_after_game();
+        });
     }
-
-    field_load();
 }
 
 
@@ -413,7 +456,7 @@ void Creator::field_load()
     int rows, cols;
     in >> rows >> cols;
 
-    f->set_size(rows, cols);
+    f->set_size(rows, cols, false);
 
     for(int y = 0; y < rows; ++y) {
         for(int x = 0; x < cols; ++x) {
@@ -474,7 +517,7 @@ Creator::Creator(QWidget *parent) :
             ui->Width->setValue(2);
         }
 
-        f->set_size(h, ui->Width->value());
+        f->set_size(h, ui->Width->value(), true);
     });
 
     connect(ui->Width , QOverload<int32_t>::of(&RPTESpinBox::valueChanged) , this, [=](uint16_t w)
@@ -483,7 +526,7 @@ Creator::Creator(QWidget *parent) :
             ui->Height->setValue(2);
         }
 
-        f->set_size(ui->Height->value(), w);
+        f->set_size(ui->Height->value(), w, true);
     });
 
     connect(ui->Field , &RPTERadioButton::toggled  , this, [=](uint16_t c)

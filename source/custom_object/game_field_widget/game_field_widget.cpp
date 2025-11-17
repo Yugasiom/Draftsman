@@ -32,33 +32,36 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
     sel_pix.load(":/icon/source/icon/shape.png")            ;
 }
 
-void GameFieldWidget::set_size(int16_t nr, int16_t nc)
+void GameFieldWidget::set_size(int16_t nr, int16_t nc, bool reset)
 {
-    cells.assign(max_r, std::vector<Cell>(max_c));
-    int16_t y, x, cs = std::min(width() / c, height() / r);
-    float hp = 0.75;
     r = qBound(int16_t(1), nr, max_r);
     c = qBound(int16_t(1), nc, max_c);
     Q_ASSERT(r <= max_r && c <= max_c);
+
     if(r == 1 && c == 1) {
         r = 1;
         c = 2;
     }
 
-    for(    y = 0; y < max_r; ++y) {
-        for(x = 0; x < max_c; ++x) {
-            cells[y][x].ti     = 0;
-            cells[y][x].c      = COLOR_EMPTY;
+    if (reset) {
+        cells.assign(max_r, std::vector<Cell>(max_c));
+        for (int y = 0; y < max_r; ++y) {
+            for (int x = 0; x < max_c; ++x) {
+                cells[y][x].ti = TYPE_NONE;
+                cells[y][x].c  = COLOR_EMPTY;
+            }
         }
+
+        fcp = false;
+        h   = QPoint(-1,-1);
+        lc  = QPoint(-1,-1);
+        p_p = QPoint(-1,-1);
     }
 
-    fcp       = false;
-    h         = QPoint(-1,-1);
-    lc        = QPoint(-1,-1);
-    p_p = QPoint(-1, -1);
-
-    sca_flag  = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    sca_sel   = sel_pix.scaled( cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    int16_t cs = std::min(width() / c, height() / r);
+    float hp = 0.75;
+    sca_flag = flag_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    sca_sel  = sel_pix.scaled(cs * hp, cs * hp, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     update();
 }
 
@@ -129,18 +132,45 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             // Рисуем содержимое клетки
             if (ce.ti == TYPE_FLAG && ce.c == COLOR_FIELD) {
                 p.fillRect(re, ce.c);
+                // Затемнение активного поля для всех инструментов
+                if (t_e && ce.c != COLOR_EMPTY) {
+                    p.save();
+                    p.setBrush(COLOR_FIELD.darker(110));
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(re, 18, 18);
+                    p.restore();
+                }
+
                 QPoint cent = re.center() - QPoint(sca_flag.width() / 2, sca_flag.height() / 2);
                 QRect tarr(cent, sca_flag.size());
                 p.drawPixmap(tarr, sca_flag);
             } else if (ce.ti == TYPE_ENEMY) {
                 p.fillRect(re, COLOR_FIELD);
+                // Затемнение активного поля для всех инструментов
+                if (t_e && ce.c != COLOR_EMPTY) {
+                    p.save();
+                    p.setBrush(COLOR_FIELD.darker(110));
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(re, 18, 18);
+                    p.restore();
+                }
+
                 QPoint cent = re.center() - QPoint(sca_sel.width() / 2, sca_sel.height() / 2);
                 QRect tarr(cent, sca_sel.size());
                 p.drawPixmap(tarr, sca_sel);
             } else {
                 p.fillRect(re, f);
+                // Затемнение активного поля для всех инструментов
+                if (t_e && ce.c != COLOR_EMPTY) {
+                    p.save();
+                    p.setBrush(COLOR_FIELD.darker(110));
+                    p.setPen(Qt::NoPen);
+                    p.drawRoundedRect(re, 18, 18);
+                    p.restore();
+                }
             }
 
+            if (t_e) {
             // Подсказки для инструмента "Поле" на пустых клетках (соседи/первая клетка)
             if (ct == TOOL_FIELD && ce.c == COLOR_EMPTY) {
                 bool nei = false;
@@ -157,14 +187,6 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 }
             }
 
-            // Затемнение активного поля для всех инструментов
-            if ((ct == TOOL_FLAG || ct == TOOL_PLAYER || ct == TOOL_FIELD) &&
-                ce.c != COLOR_EMPTY && ce.ti == TYPE_FIELD) {
-                p.setBrush(COLOR_FIELD.darker(110));
-                p.setPen(Qt::NoPen);
-                p.drawRoundedRect(re, 18, 18);
-            }
-
             // Подсветка выбраного врага (без "двоения": не рисуем, если на клетке стоит игрок)
             if (ce.ti == TYPE_ENEMY && lc == QPoint(x, y) && QPoint(x, y) != p_p) {
                 QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
@@ -176,10 +198,10 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                 p.drawRoundedRect(in, rad, rad);
                 p.restore();
             }
+            }
         }
     }
 
-    // Игрок рисуется отдельно поверх содержимого клеток
     if (p_p.y() >= 0 && p_p.x() >= 0) {
         QRect re(ox + p_p.x() * cs, oy + p_p.y() * cs, cs, cs);
         QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
@@ -192,19 +214,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
         p.restore();
     }
 
-    // Игрок рисуется отдельно поверх содержимого клеток
-    if (p_p.y() >= 0 && p_p.x() >= 0) {
-        QRect re(ox + p_p.x() * cs, oy + p_p.y() * cs, cs, cs);
-        QRectF in = re.adjusted(cs / 4, cs / 4, -cs / 4, -cs / 4);
-        rad = cs / 5;
-        p.save();
-        QColor b = COLOR_PLAYER.darker(130);
-        p.setPen(QPen(b, 5));
-        p.setBrush(COLOR_PLAYER);
-        p.drawRoundedRect(in, rad, rad);
-        p.restore();
-    }
-
+    if (t_e) {
     // --- Оранжевая подсветка поверх всего ---
     if (h.y() >= 0 && h.x() >= 0 && !md) {
         const Cell &ce = cells[h.y()][h.x()];
@@ -228,6 +238,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             p.setPen(Qt::NoPen);
             p.drawRoundedRect(re, 9, 9);
         }
+    }
     }
 
     p.setClipping(false);
@@ -313,6 +324,11 @@ void GameFieldWidget::mouseReleaseEvent(QMouseEvent *)
 
 void GameFieldWidget::handle_click(int16_t x, int16_t y)
 {
+    if (!t_e) {
+        // инструменты выключены → во время игры поле не редактируется
+        return;
+    }
+
     Cell &cell = cells[y][x];
 
     // --- Поле ---
@@ -396,6 +412,11 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
     // --- Игрок ---
     if (ct == TOOL_PLAYER) {
+        if (!t_e) {
+            // во время игры игрок не редактируется
+            return;
+        }
+
         if (cell.c == COLOR_EMPTY) return;
 
         // Сначала обрабатываем “клик по игроку” — убрать игрока, даже если под ним враг/флаг

@@ -74,11 +74,11 @@ class GameFieldWidget : public QWidget
                      QPixmap        flag_pix  , sel_pix, sca_flag, sca_sel          ;
 
 
-                     bool           fcp    = false                                  ;
+                     bool           fcp    = false,   t_e = true                    ;
 
 
     std::vector<std::vector<Cell>>  cells     , init_cells                          ;
-                     int16_t        r      = 5, c = 5, ct = 1                       ;
+                     int16_t        r      = 5, c = 5, ct = 1, penalty      =    0  ;
                      QPoint         h{-1, -1} , lc{-1, -1}   , p_p = QPoint(-1, -1) ;
 
 
@@ -89,9 +89,6 @@ class GameFieldWidget : public QWidget
                      bool           is_interactive_cell(uint16_t, const Cell&) const;
                      bool           is_connected_after_removal(int16_t, int16_t)    ;
                 std::vector<QPoint> find_shortest_path        (QPoint , QPoint )    ;
-
-                     bool game_running = false;
-                     int penalty = 0;
 
     protected:
                      void           leaveEvent         (QEvent*           ) override;
@@ -119,7 +116,7 @@ class GameFieldWidget : public QWidget
                      }
 
 
-                     void           set_size           (int16_t, int16_t  )         ;
+                     void           set_size           (int16_t, int16_t, bool=true);
                      void           set_current_tool   (int32_t)                    ;
                      void           move_player        (int32_t, int32_t  )         ;
                      bool           move_player_step   (int32_t, int32_t  )         ;
@@ -166,6 +163,16 @@ class GameFieldWidget : public QWidget
                      {
                          p_p = p                                                    ;
                          update()                                                   ;
+                     }
+
+                     void set_tools_enabled(bool en)
+                     {
+                         t_e = en                                                   ;
+                     }
+
+                     bool tools_enabled() const
+                     {
+                         return t_e                                                 ;
                      }
 }                                                                                   ;
 
