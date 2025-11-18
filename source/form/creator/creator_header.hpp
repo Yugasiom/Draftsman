@@ -45,11 +45,8 @@ enum class CmdType{UNKNOWN, MOVE, PAINT}                                        
 struct Command
 {
     CmdType  type;
-    QString  raw;
-    int32_t  dx  = 0, dy = 0                                                                ,
-             steps       = 1                                                                ,
-             loop_count  = 0                                                                ;
-    QString  condition   = QString()                                                        ;
+    QString  raw   , condition     = QString()                                              ;
+    int32_t  dx = 0, dy = 0, steps = 1, loop_count = 0                                      ;
 };
 
 
@@ -61,19 +58,13 @@ class Creator : public QMainWindow
 
     private:
         Ui::Draftsman   *ui                                                                 ;
-
         QTimer          *com_timer                = nullptr                                 ;
         QStringList      com                                                                ;
-        int32_t          com_ci                   = 0                                       ,
-                         plan_index               = 0                                       ,
-                         ene_init                 = 0                                       ,
-                         step_made                = 0                                       ;
+        int32_t          com_ci                   = 0, plan_index       = 0                 ,
+                         ene_init                 = 0, step_made        = 0                 ;
         GameFieldWidget *f                        = nullptr                                 ;
-
         QVector<Command> plan;
-        bool             game_ended               = false                                   ;
-        bool             reach_flag               = false                                   ;
-
+        bool             game_ended               = false, reach_flag   = false             ;
 
         Command          parse_line               (const QString&                          );
         QVector<Command> build_plan               (const QStringList&                      );

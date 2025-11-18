@@ -119,17 +119,12 @@ void ResizablePlainTextEdit::keyPressEvent(QKeyEvent *e)
     }
 
 
-
     apply_font_format();
-
     QTextEdit::keyPressEvent(e);
     QTextCursor c = textCursor();
     int32_t p = c.position();
-
     c.select(QTextCursor::WordUnderCursor);
-
-    QString w = c.selectedText();
-    QString f;
+    QString w = c.selectedText(), f;
     if(o.contains(w.trimmed(), Qt::CaseInsensitive)) {
         f = normalize_case(w);
         c.insertText(f);
@@ -159,11 +154,9 @@ void ResizablePlainTextEdit::handle_text_changed()
 void ResizablePlainTextEdit::insertFromMimeData(const QMimeData *s)
 {
     apply_font_format();
-    QString t = s->text();
-    // нормализуем переносы строк
+    QString     t = s->text();
     t.replace("\r\n", "\n");
     t.replace("\r", "\n");
-
     QTextCursor c = textCursor();
     c.insertText(t, c.charFormat());
 }

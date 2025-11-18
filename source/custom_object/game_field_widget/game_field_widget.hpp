@@ -45,7 +45,7 @@
 
 #define COLOR_FIELD   WHITE
 #define COLOR_EMPTY   GRAY
-#define COLOR_PAINTED YELLOW
+#define COLOR_PAINT   YELLOW
 
 #define COLOR_BORDER  DARK_GRAY
 #define COLOR_HOVER   ORANGE
@@ -62,8 +62,8 @@ class GameFieldWidget : public QWidget
     public:
         struct Cell
         {
-                     int32_t    ti         = 0                                      ;
-                     QColor     c                                                   ;
+                     int32_t        ti         = 0                                  ;
+                     QColor         c                                               ;
         }                                                                           ;
 
     private:
@@ -138,41 +138,41 @@ class GameFieldWidget : public QWidget
 
         const std::vector<std::vector<Cell>>& get_cells(                  )    const
                      {
-                         return cells                                               ;
+                         return     cells                                           ;
                      }
 
         std::vector<std::vector<Cell>>& access_cells   (                  )
                      {
-                         return cells                                               ;
+                         return     cells                                           ;
                      }
 
                      void           set_cell  (int32_t y, int32_t x, const Cell &cel)
                      {
                          if(y >= 0 && y < r && x >= 0 && x < c) {
-                             cells[y][x] = cel                                      ;
-                             update()                                               ;
+                                    cells[y][x] = cel                               ;
+                                    update()                                        ;
                          }
                      }
 
                      QPoint get_player_pos() const
                      {
-                         return p_p                                                 ;
+                         return     p_p                                             ;
                      }
 
                      void set_player_pos(QPoint p)
                      {
-                         p_p = p                                                    ;
-                         update()                                                   ;
+                                    p_p = p                                         ;
+                                    update()                                        ;
                      }
 
                      void set_tools_enabled(bool en)
                      {
-                         t_e = en                                                   ;
+                                    t_e = en                                        ;
                      }
 
                      bool tools_enabled() const
                      {
-                         return t_e                                                 ;
+                         return     t_e                                             ;
                      }
 }                                                                                   ;
 
