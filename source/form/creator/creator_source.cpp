@@ -353,9 +353,9 @@ void Creator::executeNextCommand()
             f->paint_under_player();
             auto &cell = f->access_cells()[np.y()][np.x()];
             if(    cell.ti == TYPE_FLAG) {
-                cell.ti = TYPE_FIELD;
-                reach_flag = true;
-                game_ended = true;
+                   cell.ti  = TYPE_FIELD;
+                reach_flag  = true;
+                game_ended  = true;
                 com_timer->stop();
                 conclude_if_needed();
 
@@ -508,6 +508,7 @@ void Creator::show_missing_window(const QString &m)
 QString Creator::level_save_path() const
 {
     QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp();
     dir.cdUp();
     dir.mkpath("source/saves/lvls");
 

@@ -175,6 +175,8 @@ class GameFieldWidget : public QWidget
                      {
                          return     t_e                                             ;
                      }
+
+                 void set_theme_colors(const QColor&, const QColor&, const QColor& );
 }                                                                                   ;
 
 

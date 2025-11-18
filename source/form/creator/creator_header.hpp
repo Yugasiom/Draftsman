@@ -21,6 +21,10 @@
 
 
 
+#include "../menu/main/main_intro_window_dialog.hpp"
+
+
+
 QT_BEGIN_NAMESPACE
 
 
@@ -58,13 +62,15 @@ class Creator : public QMainWindow
 
     private:
         Ui::Draftsman   *ui                                                                 ;
-        QTimer          *com_timer                = nullptr                                 ;
+        QTimer          *com_timer                =       nullptr                           ;
         QStringList      com                                                                ;
-        int32_t          com_ci                   = 0, plan_index       = 0                 ,
-                         ene_init                 = 0, step_made        = 0                 ;
-        GameFieldWidget *f                        = nullptr                                 ;
-        QVector<Command> plan;
-        bool             game_ended               = false, reach_flag   = false             ;
+        int32_t          com_ci                   =             0, plan_index   = 0         ,
+                         ene_init                 =             0, step_made    = 0         ;
+        GameFieldWidget *f                        =       nullptr                           ;
+        QVector<Command> plan                                                               ;
+        bool             game_ended               =         false, reach_flag   = false     ;
+        QString          ln                                      , sp                       ;
+        LevelTheme       THEME                                                              ;
 
         Command          parse_line               (const QString&                          );
         QVector<Command> build_plan               (const QStringList&                      );
@@ -75,7 +81,7 @@ class Creator : public QMainWindow
         void             show_missing_window      (const QString&                          );
         void             reset_after_game         (                                        );
         int32_t          default_steps_by_case    (const QString&                    ) const;
-        int32_t          parse_steps              (const QString&    ,       const QString&);
+        int32_t          parse_steps              (const QString&,           const QString&);
         QString          check_missing_elements   (                                  ) const;
         bool             validate_program         (const QStringList&                      );
         QString          level_save_path          (                                  ) const;

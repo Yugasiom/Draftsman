@@ -16,7 +16,7 @@ SOURCES   += main.cpp                                                           
              source/custom_object/rpte_push_button/rpte_push_button.cpp                   \
              source/custom_object/rpte_radio_button/rpte_radio_button.cpp                 \
              source/custom_object/rpte_spin_box/rpte_spin_box.cpp                         \
-             source/form/creator/creator_source.cpp \
+             source/form/creator/creator_source.cpp                                       \
              source/form/menu/main/main_intro_window_dialog.cpp
 
 
@@ -27,7 +27,7 @@ HEADERS   += source/custom_object/game_field_widget/game_field_widget.hpp       
              source/custom_object/rpte_push_button/rpte_push_button.hpp                   \
              source/custom_object/rpte_radio_button/rpte_radio_button.hpp                 \
              source/custom_object/rpte_spin_box/rpte_spin_box.hpp                         \
-             source/form/creator/creator_header.hpp \
+             source/form/creator/creator_header.hpp                                       \
              source/form/menu/main/main_intro_window_dialog.hpp
 
 
