@@ -6,6 +6,22 @@
 
 void Creator::on_Play_clicked()
 {
+    if(com_timer && !com_timer->isActive() && !game_ended) {
+        com_timer->start(275);
+        ui->Play->setIcon(QIcon(":/icon/source/icon/pause.png"));
+
+
+        return;
+    }
+
+    if(com_timer && com_timer->isActive()) {
+        com_timer->stop();
+        ui->Play->setIcon(QIcon(":/icon/source/icon/play.png"));
+
+
+        return;
+    }
+
     field_save();
     QString m = check_missing_elements();
     if(!validate_before_run()) {
@@ -27,6 +43,7 @@ void Creator::on_Play_clicked()
     ui->Height->setEnabled( false);
     ui->Width->setEnabled(  false);
     f->set_tools_enabled(   false);
+    f->update();
     plan          = build_plan(lin);
     plan_index    = 0;
     step_made     = 0;
@@ -39,6 +56,19 @@ void Creator::on_Play_clicked()
     }
 
     com_timer->start(275);
+    ui->Play->setIcon(QIcon(":/icon/source/icon/pause.png"));
+    ui->Reset->setEnabled(true);
+}
+
+
+void Creator::on_Reset_clicked()
+{
+    if(com_timer) {
+        com_timer->stop();
+    }
+
+    game_ended = true;
+    reset_after_game();
 }
 
 
@@ -344,14 +374,30 @@ void Creator::executeNextCommand()
 
 void Creator::reset_after_game()
 {
+    if(com_timer) {
+        com_timer->stop();
+    }
+
+    game_ended           =  true ;
+    reach_flag           = false ;
+    plan_index           =     0 ;
+    step_made            =     0 ;
+    plan.clear();
+    ui->Reset->setEnabled( false);
     ui->Field->setEnabled(  true);
     ui->Flag->setEnabled(   true);
     ui->Player->setEnabled( true);
     ui->Secured->setEnabled(true);
     ui->Height->setEnabled( true);
     ui->Width->setEnabled(  true);
+    f->setEnabled(          true);
     f->set_tools_enabled(   true);
     field_load();
+    ui->Play->setIcon(QIcon(":/icon/source/icon/play.png"));
+    QPalette pal = ui->Play->palette();
+    pal.setColor(QPalette::Button, pal.color(QPalette::Button));
+    ui->Play->setPalette(pal);
+    ui->Play->update();
 }
 
 
@@ -442,9 +488,14 @@ void Creator::show_missing_window(const QString &m)
     d.setWindowModality(Qt::ApplicationModal);
     d.setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint);
     d.setFixedSize(450, 200);
+    QPalette pal = d.palette();
+    pal.setColor(QPalette::Highlight, QColor(255, 165, 0));
+    d.setPalette(pal);
     QVBoxLayout l(&d);
     QLabel a(m, &d);
     a.setAlignment(Qt::AlignCenter);
+    a.setWordWrap(true);
+    a.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     l.addWidget(&a);
     QPushButton b("Хорошо", &d);
     b.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -532,6 +583,21 @@ Creator::Creator(QWidget *parent) :
 
 
 
+    ui->Secured->setIcon(QIcon(":/icon/source/icon/unlock.png"));
+
+
+
+
+    ui->Reset->setEnabled(false);
+
+
+
+
+    ui->Play->setIcon(QIcon(":/icon/source/icon/play.png"));
+
+
+
+
     ui->Field->setChecked(true);
 
 
@@ -553,6 +619,12 @@ Creator::Creator(QWidget *parent) :
 
     connect(ui->Secured, &QCheckBox::toggled                               , this, [=](uint16_t lo)
     {
+        if(lo) {
+            ui->Secured->setIcon(QIcon(":/icon/source/icon/lock.png"));
+        } else {
+            ui->Secured->setIcon(QIcon(":/icon/source/icon/unlock.png"));
+        }
+
         ui->Height->setEnabled(!lo);
         ui->Width->setEnabled(!lo);
     });
@@ -575,21 +647,21 @@ Creator::Creator(QWidget *parent) :
         f->set_size(ui->Height->value(), w, true);
     });
 
-    connect(ui->Field , &RPTERadioButton::toggled  , this, [=](uint16_t c)
+    connect(ui->Field , &RPTERadioButton::toggled                          , this, [=](uint16_t c)
     {
         if(c) {
             f->set_current_tool(1);
         }
     });
 
-    connect(ui->Flag  , &RPTERadioButton::toggled  , this, [=](uint16_t c)
+    connect(ui->Flag  , &RPTERadioButton::toggled                          , this, [=](uint16_t c)
     {
         if(c) {
             f->set_current_tool(2);
         }
     });
 
-    connect(ui->Player, &RPTERadioButton::toggled  , this, [=](uint16_t c)
+    connect(ui->Player, &RPTERadioButton::toggled                          , this, [=](uint16_t c)
     {
         if(c) {
             f->set_current_tool(3);

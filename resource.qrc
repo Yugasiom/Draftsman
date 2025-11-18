@@ -8,6 +8,9 @@
         <file>source/icon/flag.png</file>
         <file>source/icon/lock.png</file>
         <file>source/icon/play.png</file>
+        <file>source/icon/unlock.png</file>
+        <file>source/icon/pause.png</file>
+        <file>source/icon/reset.png</file>
     </qresource>
 </RCC>
 

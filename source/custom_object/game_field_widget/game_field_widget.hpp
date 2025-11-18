@@ -26,6 +26,7 @@
 #define DARK_GRAY     QColor(060, 060, 060)
 
 #define YELLOW        QColor(255, 255, 000)
+#define DARK_WHITE    QColor(180, 198, 198)
 
 #define ORANGE        QColor(255, 140, 000)
 #define PURPLE        QColor(160, 032, 240)
@@ -45,7 +46,7 @@
 
 #define COLOR_FIELD   WHITE
 #define COLOR_EMPTY   GRAY
-#define COLOR_PAINT   YELLOW
+#define COLOR_PAINT   DARK_WHITE
 
 #define COLOR_BORDER  DARK_GRAY
 #define COLOR_HOVER   ORANGE

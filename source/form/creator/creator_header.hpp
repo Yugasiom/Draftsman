@@ -83,6 +83,7 @@ class Creator : public QMainWindow
 
     private slots:
         void             on_Play_clicked          (                                        );
+        void             on_Reset_clicked         (                                        );
         void             executeNextCommand       (                                        );
 
 

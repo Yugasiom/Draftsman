@@ -5,6 +5,7 @@
 #include <QFontDatabase>
 
 #include "source/form/creator/creator_header.hpp"
+#include "source/form/menu/main/main_intro_window_dialog.hpp"
 
 
 int main(int32_t argc, char *argv[])
@@ -24,11 +25,15 @@ int main(int32_t argc, char *argv[])
 
 
 
-    Creator w;
+    MIWD intro;
+    if(intro.exec() == QDialog::Accepted) {
+        Creator w;
+        w.show();
 
 
-    w.show();
+        return a.exec();
+    }
 
 
-    return a.exec();
+    return 0;
 }

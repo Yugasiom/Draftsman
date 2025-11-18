@@ -414,12 +414,15 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
         if(cell.ti == TYPE_FLAG) {
             cell.ti = TYPE_FIELD;
+            cell.c  = COLOR_FIELD;
             if(lc == QPoint(x, y)) {
-                lc = {-1, -1};
-
-
-                return;
+                lc = QPoint(-1, -1);
             }
+
+            update();
+
+
+            return;
         }
 
         if(p_p == QPoint(x, y)) {
