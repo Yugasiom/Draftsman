@@ -6,11 +6,9 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
 {
     setFixedSize(800, 500);
     setWindowTitle("Draftsman");
-
     auto *ml = new QVBoxLayout(this);
     ml->setContentsMargins(24, 16, 24, 16);
     ml->setSpacing(0);
-
     progress = new QProgressBar(this);
     progress->setRange(0, 100);
     progress->setValue(0);
@@ -22,7 +20,6 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
                             "  border-radius: 5px;"
                             "}");
     ml->addWidget(progress);
-
     QLabel *hl = new QLabel("Добро пожаловать в обучающую программу «Draftsman»", this);
     hl->setAlignment(Qt::AlignCenter);
     hl->setWordWrap(true);
@@ -30,11 +27,8 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
     ml->addSpacing(16);
     ml->addWidget(hl);
     ml->addSpacing(24);
-
     stack = new QStackedWidget(this);
     ml->addWidget(stack, 1);
-
-    // --- Страница 0 ---
     auto *p0 = new QWidget(this);
     auto *p0l = new QVBoxLayout(p0);
     QPushButton *createBtn = new QPushButton("Создать", p0);
@@ -47,8 +41,6 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
     p0l->addWidget(openBtn, 0, Qt::AlignCenter);
     p0l->addStretch();
     stack->addWidget(p0);
-
-    // --- Страница 1 ---
     auto *p1 = new QWidget(this);
     auto *p1l = new QVBoxLayout(p1);
     pbtn = new QRadioButton("Прототип", p1);
@@ -74,8 +66,6 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
     br1->addWidget(nextBtn1, 0, Qt::AlignRight);
     p1l->addLayout(br1);
     stack->addWidget(p1);
-
-    // --- Страница 2 ---
     auto *p2 = new QWidget(this);
     auto *p2l = new QVBoxLayout(p2);
     nedit = new QLineEdit(p2);
@@ -94,8 +84,6 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
     br2->addWidget(nbtn, 0, Qt::AlignRight);
     p2l->addLayout(br2);
     stack->addWidget(p2);
-
-    // --- Логика ---
     connect(createBtn, &QPushButton::clicked, this, [this, hl]() {
         stack->setCurrentIndex(1);
         progress->setValue(50);
@@ -103,7 +91,9 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
     });
     connect(openBtn, &QPushButton::clicked, this, [this]() {
         QString fileName = QFileDialog::getOpenFileName(this, "Открыть уровень", "", "Уровни (*.dat)");
-        if(!fileName.isEmpty()) accept();
+        if(!fileName.isEmpty()) {
+            accept();
+        }
     });
     connect(backBtn1, &QPushButton::clicked, this, [this, hl]() {
         stack->setCurrentIndex(0);
@@ -120,6 +110,7 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
             THEME.color_empty = QColor(255, 255, 255);
             THEME.color_paint = QColor(180, 198, 198);
         }
+
         stack->setCurrentIndex(2);
         progress->setValue(100);
         hl->setText("Назовите уровень");
@@ -134,12 +125,17 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
         QString nm = nedit->text().trimmed();
         if(nm.isEmpty()) {
             QMessageBox::warning(this, "Ошибка", "Введите название уровня.");
+
+
             return;
         }
         if(nm.contains(QRegularExpression("[/\\\\\\-.,]"))) {
             QMessageBox::warning(this, "Ошибка", "Название содержит запрещённые символы: / \\ - . ,");
+
+
             return;
         }
+
         accept();
     });
 
@@ -151,7 +147,7 @@ MIWD::MIWD(QWidget *p) : QDialog(p)
 
 void MIWD::goNext()
 {
-    int idx = stack->currentIndex();
+    int32_t idx = stack->currentIndex();
     if(idx == 1) {
         if(fbtn->isChecked()) {
             THEME.color_field = QColor(144, 238, 144);
@@ -162,28 +158,37 @@ void MIWD::goNext()
             THEME.color_empty = QColor(255, 255, 255);
             THEME.color_paint = QColor(180, 198, 198);
         }
+
         stack->setCurrentIndex(2);
         progress->setValue(2);
     } else if(idx == 2) {
         QString nm = nedit->text().trimmed();
         if(nm.isEmpty()) {
             QMessageBox::warning(this, "Ошибка", "Введите название уровня.");
+
+
             return;
         }
+
         if(nm.contains(QRegularExpression("[/\\\\\\-.,]"))) {
             QMessageBox::warning(this, "Ошибка", "Название содержит запрещённые символы: / \\ - . ,");
+
+
             return;
         }
+
         accept();
     }
 }
 
 
-QString MIWD::level_name() const {
+QString MIWD::level_name() const
+{
     return nedit->text().trimmed();
 }
 
 
-MIWD::LocationType MIWD::location() const {
+MIWD::LocationType MIWD::location() const
+{
     return fbtn->isChecked() ? FOREST : PROTOTYPE;
 }

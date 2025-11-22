@@ -45,7 +45,7 @@ class ResizablePlainTextEdit : public QTextEdit
     Q_OBJECT
 
 
-    private:
+    private                                                                                :
         QWidget *lna                   = nullptr                                           ;
 
 
@@ -59,16 +59,16 @@ class ResizablePlainTextEdit : public QTextEdit
         void     update_all_text_format(uint16_t           )                               ;
         uint16_t calculate_font_size   (                   )                          const;
 
-    private slots:
+    private slots                                                                          :
         void     handle_text_changed   (                   )                               ;
 
-    protected:
+    protected                                                                              :
         void     resizeEvent           (      QResizeEvent*)                       override;
         void     focusInEvent          (      QFocusEvent* )                       override;
         void     keyPressEvent         (      QKeyEvent*   )                       override;
         void     insertFromMimeData    (const QMimeData*   )                       override;
 
-    public:
+    public                                                                                 :
         explicit ResizablePlainTextEdit(QWidget* =nullptr  )                               ;
 }                                                                                          ;
 

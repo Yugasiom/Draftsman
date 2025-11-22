@@ -44,7 +44,7 @@ class MIWD : public QDialog
     Q_OBJECT
 
 
-    private:
+    private                                         :
              QLineEdit      *nedit                  ;
              QPushButton    *nbtn                   ;
              QProgressBar   *progress               ;
@@ -55,11 +55,11 @@ class MIWD : public QDialog
              bool            oe            =   false;
 
 
-    private slots:
+    private slots                                   :
              void goNext();
 
 
-    public:
+    public                                          :
         explicit             MIWD(QWidget* =nullptr);
              QString         level_name()      const;
         enum LocationType   {PROTOTYPE, FOREST     };
