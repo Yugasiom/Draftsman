@@ -175,9 +175,9 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                     } else {
                         allo = true;
                         if(ct == TOOL_FLAG) {
-                            allo = is_connected_after_addition(x,y,TYPE_FLAG);
+                            allo = is_connected_after_addition(x, y, TYPE_FLAG);
                         } else if(ct == TOOL_FIELD && ce.ti == TYPE_FIELD) {
-                            allo = is_connected_after_addition(x,y,TYPE_ENEMY);
+                            allo = is_connected_after_addition(x, y, TYPE_ENEMY);
                         }
                     }
 
@@ -202,9 +202,9 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
                     } else {
                         allo = true;
                         if(ct == TOOL_FLAG) {
-                            allo = is_connected_after_addition(x,y,TYPE_FLAG);
+                            allo = is_connected_after_addition(x, y, TYPE_FLAG);
                         } else if(ct == TOOL_FIELD && ce.ti == TYPE_FIELD) {
-                            allo = is_connected_after_addition(x,y,TYPE_ENEMY);
+                            allo = is_connected_after_addition(x, y, TYPE_ENEMY);
                         }
                     }
 
@@ -267,7 +267,7 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             QRect       re(ox + h.x() * cs, oy + h.y() * cs, cs, cs);
             bool        high = false;
             if(ct == TOOL_FLAG) {
-                if(ce.c != COLOR_EMPTY && is_connected_after_addition(h.x(), h.y(), TYPE_FLAG)) {
+                if(ce.c != COLOR_EMPTY) {
                         high = true;
                 }
             } else if(ct == TOOL_FIELD) {
