@@ -11,12 +11,14 @@
 #include <vector>
 
 
-#include <QPoint>
 #include <QColor>
+#include <QPoint>
 #include <QWidget>
 #include <QPainter>
 #include <QMouseEvent>
 #include <QPainterPath>
+#include <QMediaPlayer>
+#include <QAudioOutput>
 
 
 
@@ -84,12 +86,16 @@ class GameFieldWidget : public QWidget
 
 
                      uint16_t       md     = 0                                      ;
+                     QMediaPlayer  *cs        , *ms                                 ;
+                     QAudioOutput  *csa       , *msa                                ;
 
                      void           handle_click       (int16_t , int16_t    )      ;
                      bool           has_active_cells   (                     ) const;
                      bool           is_interactive_cell(uint16_t, const Cell&) const;
-                     bool           is_connected_after_removal(int16_t, int16_t)    ;
-                std::vector<QPoint> find_shortest_path        (QPoint , QPoint )    ;
+                     bool           is_connected_after_removal (int16_t, int16_t)   ;
+                     bool           is_connected_after_addition(int16_t, int16_t,
+                                                                int32_t)            ;
+                     bool           can_place_player           (int16_t, int16_t)   ;
 
     protected:
                      void           leaveEvent         (QEvent*           ) override;
@@ -123,8 +129,13 @@ class GameFieldWidget : public QWidget
                      bool           move_player_step   (int32_t, int32_t  )         ;
                      void           paint_under_player (                  )         ;
                      void           remove_enemy_under_player  (          )         ;
+                     void           play_click         (                  )         ;
+                     void           play_move          (                  )         ;
+                     void           play_sound         (QMediaPlayer*     )         ;
                      QPoint         find_player        (                  )    const;
+                     QPoint         find_nearest_flag  (                  )    const;
                      uint16_t       count_enemies      (                  )    const;
+                std::vector<QPoint> find_shortest_path (QPoint , QPoint   )         ;
 
 
                      int32_t        rows               (                  )    const

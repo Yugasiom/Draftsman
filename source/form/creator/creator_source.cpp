@@ -6,6 +6,7 @@
 
 void Creator::on_Play_clicked()
 {
+    f->play_click();
     if(com_timer && !com_timer->isActive() && !game_ended) {
         com_timer->start(275);
         ui->Play->setIcon(QIcon(":/icon/source/icon/pause.png"));
@@ -63,6 +64,7 @@ void Creator::on_Play_clicked()
 
 void Creator::on_Reset_clicked()
 {
+    f->play_click();
     if(com_timer) {
         com_timer->stop();
     }
@@ -413,10 +415,18 @@ void Creator::conclude_if_needed()
 
     const uint16_t ms = 275;
     if(ene_init == 0) {
-        QTimer::singleShot(ms     , this, [this]() {
-                show_result_window(true, false, false);
-                reset_after_game();
-        });
+         QPoint start = f->get_player_pos(), goal  = f->find_nearest_flag();
+         auto sho = f->find_shortest_path(start, goal);
+         bool iss = !sho.empty() && (static_cast<int32_t>(sho.size()) - 1 == step_made);
+         QTimer::singleShot(ms, this, [this, iss]() {
+             if(iss) {
+                 show_result_window(true, false, false);
+             } else {
+                 show_result_window(false, false, false);
+             }
+
+             reset_after_game();
+         });
     } else if(f->count_enemies() == 0) {
         QTimer::singleShot(ms     , this, [this]() {
                 show_result_window(false, true, false);
@@ -441,7 +451,7 @@ void Creator::show_result_window(bool wm, bool wpa, bool lose)
     } else if(wm) {
         m = "Победа: вы помогли роботу добраться до\nфиниша за минимальное количество шагов!!!"  ;
     } else {
-        m = "Победа: основное задание не выполнено,\nно вы помогли роботу добраться до финиша...";
+        m = "Победа: вы помогли роботу добраться до финиша...";
     }
 
     show_missing_window(m)                                                                       ;
@@ -508,8 +518,6 @@ void Creator::show_missing_window(const QString &m)
 QString Creator::level_save_path() const
 {
     QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    dir.cdUp();
     dir.mkpath("source/saves/lvls");
 
 

@@ -1,4 +1,5 @@
-QT        += core gui
+QT        += core gui                                                                     \
+             multimedia
 
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -50,6 +51,8 @@ DISTFILES += source/font/MesloLGSNerdFont-Regular.ttf                           
              source/icon/reset.png                                                        \
              source/icon/shape.png                                                        \
              source/icon/flag.png                                                         \
-             source/icon/unlock.png
+             source/icon/unlock.png                                                       \
+             source/sound/click.ogg                                                       \
+             source/sound/move.ogg
 
 

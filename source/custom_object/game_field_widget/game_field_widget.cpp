@@ -30,6 +30,16 @@ GameFieldWidget::GameFieldWidget(QWidget *p) : QWidget(p)
     set_size(r, c)                                          ;
     flag_pix.load(":/icon/source/icon/flag.png")            ;
     sel_pix.load(":/icon/source/icon/shape.png")            ;
+    cs  = new QMediaPlayer(this)                            ;
+    csa = new QAudioOutput(this)                            ;
+    cs->setAudioOutput(csa)                                 ;
+    cs->setSource(QUrl("qrc:/sound/source/sound/click.wav"));
+    ms  = new QMediaPlayer(this)                            ;
+    msa = new QAudioOutput(this)                            ;
+    ms->setAudioOutput(msa)                                 ;
+    ms->setSource(QUrl("qrc:/sound/source/sound/move.wav")) ;
+    csa->setVolume(1.0)                                     ;
+    msa->setVolume(1.0)                                     ;
 }
 
 void GameFieldWidget::set_size(int16_t nr, int16_t nc, bool reset)
@@ -117,9 +127,10 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
               cs = std::min(width() / c, height() / r),
               ox = (width()  - cs * c) / 2,
               oy = (height() - cs * r) / 2;
-    uint16_t rad, bt = 4;
+    uint16_t  rad, bt = 4;
     QRect     ou(ox, oy, cs * c, cs * r),
               ad = ou.adjusted(bt / 2, bt / 2, -bt / 2, -bt / 2);
+    bool allo    = true;
     p.setClipRect(ad);
     for(    y = 0; y < r; ++y) {
         for(x = 0; x < c; ++x) {
@@ -129,12 +140,29 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             if(ce.ti == TYPE_FLAG && ce.c == COLOR_FIELD) {
                 p.fillRect(re, ce.c);
                 if(t_e && ce.c != COLOR_EMPTY) {
-                    p.save();
-                    p.setBrush(COLOR_FIELD.darker(110));
-                    p.setPen(Qt::NoPen);
-                    p.drawRoundedRect(re, 18, 18);
-                    p.restore();
+                    if(ct == TOOL_PLAYER) {
+                        allo = can_place_player(x, y);
+                    } else if(ct == TOOL_FLAG) {
+                        bool reach = is_connected_after_addition(x,y,TYPE_FLAG);
+                        allo = true;
+                        if(!reach) {
+                            p.setBrush(COLOR_FIELD.darker(110));
+                        }
+                    } else if(ct == TOOL_FIELD && ce.ti == TYPE_FIELD) {
+                        allo = is_connected_after_addition(x,y,TYPE_ENEMY);
+                    } else {
+                        allo = true;
+                    }
+
+                    if(allo) {
+                        p.save();
+                        p.setBrush(COLOR_FIELD.darker(110));
+                        p.setPen(Qt::NoPen);
+                        p.drawRoundedRect(re, 18, 18);
+                        p.restore();
+                    }
                 }
+
 
                 QPoint cent = re.center() - QPoint(sca_flag.width() / 2, sca_flag.height() / 2);
                 QRect tarr(cent, sca_flag.size());
@@ -142,12 +170,26 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             } else if(ce.ti == TYPE_ENEMY) {
                 p.fillRect(re, COLOR_FIELD);
                 if(t_e && ce.c != COLOR_EMPTY) {
-                    p.save();
-                    p.setBrush(COLOR_FIELD.darker(110));
-                    p.setPen(Qt::NoPen);
-                    p.drawRoundedRect(re, 18, 18);
-                    p.restore();
+                    if(ct == TOOL_PLAYER) {
+                        allo = true;
+                    } else {
+                        allo = true;
+                        if(ct == TOOL_FLAG) {
+                            allo = is_connected_after_addition(x,y,TYPE_FLAG);
+                        } else if(ct == TOOL_FIELD && ce.ti == TYPE_FIELD) {
+                            allo = is_connected_after_addition(x,y,TYPE_ENEMY);
+                        }
+                    }
+
+                    if(allo) {
+                        p.save();
+                        p.setBrush(COLOR_FIELD.darker(110));
+                        p.setPen(Qt::NoPen);
+                        p.drawRoundedRect(re, 18, 18);
+                        p.restore();
+                    }
                 }
+
 
                 QPoint cent = re.center() - QPoint(sca_sel.width() / 2, sca_sel.height() / 2);
                 QRect tarr(cent, sca_sel.size());
@@ -155,11 +197,24 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
             } else {
                 p.fillRect(re, f);
                 if(t_e && ce.c != COLOR_EMPTY) {
-                    p.save();
-                    p.setBrush(COLOR_FIELD.darker(110));
-                    p.setPen(Qt::NoPen);
-                    p.drawRoundedRect(re, 18, 18);
-                    p.restore();
+                    if(ct == TOOL_PLAYER) {
+                        allo = can_place_player(x, y);
+                    } else {
+                        allo = true;
+                        if(ct == TOOL_FLAG) {
+                            allo = is_connected_after_addition(x,y,TYPE_FLAG);
+                        } else if(ct == TOOL_FIELD && ce.ti == TYPE_FIELD) {
+                            allo = is_connected_after_addition(x,y,TYPE_ENEMY);
+                        }
+                    }
+
+                    if(allo) {
+                        p.save();
+                        p.setBrush(COLOR_FIELD.darker(110));
+                        p.setPen(Qt::NoPen);
+                        p.drawRoundedRect(re, 18, 18);
+                        p.restore();
+                    }
                 }
             }
 
@@ -209,23 +264,42 @@ void GameFieldWidget::paintEvent(QPaintEvent*)
     if(t_e) {
         if(h.y() >= 0 && h.x() >= 0 && !md) {
             const Cell &ce = cells[h.y()][h.x()];
-            QRect re(ox + h.x() * cs, oy + h.y() * cs, cs, cs);
-            bool high = false;
-            if(ce.c != COLOR_EMPTY || (ct == TOOL_FIELD && !fcp)) {
-                high = true;
-            } else if(ct == TOOL_FIELD) {
-                if((h.y() >   0   && cells[h.y() - 1][  h.x()  ].c != COLOR_EMPTY)  ||
-                   (h.y() < r - 1 && cells[h.y() + 1][  h.x()  ].c != COLOR_EMPTY)  ||
-                   (h.x() >   0   && cells[  h.y()  ][h.x() - 1].c != COLOR_EMPTY)  ||
-                   (h.x() < c - 1 && cells[  h.y()  ][h.x() + 1].c != COLOR_EMPTY)) {
-                     high = true;
+            QRect       re(ox + h.x() * cs, oy + h.y() * cs, cs, cs);
+            bool        high = false;
+            if(ct == TOOL_FLAG) {
+                if(ce.c != COLOR_EMPTY && is_connected_after_addition(h.x(), h.y(), TYPE_FLAG)) {
+                        high = true;
                 }
+            } else if(ct == TOOL_FIELD) {
+                if(!fcp) {
+                         high = (ce.c == COLOR_EMPTY);
+                } else if(ce.c == COLOR_EMPTY) {
+                    bool nei = false;
+                    if( (h.y() >   0   && cells[h.y() - 1][  h.x()  ].c != COLOR_EMPTY)  ||
+                        (h.y() < r - 1 && cells[h.y() + 1][  h.x()  ].c != COLOR_EMPTY)  ||
+                        (h.x() >   0   && cells[  h.y()  ][h.x() - 1].c != COLOR_EMPTY)  ||
+                        (h.x() < c - 1 && cells[  h.y()  ][h.x() + 1].c != COLOR_EMPTY)) {
+                         nei = true;
+                    }
+
+                         high = nei;
+                } else if(ce.ti == TYPE_FIELD) {
+                         high = is_connected_after_addition(h.x(), h.y(), TYPE_ENEMY);
+                } else if(ce.ti == TYPE_FLAG) {
+                         high = true;
+                } else if(ce.ti == TYPE_ENEMY) {
+                         high = true;
+                } else {
+                         high = false;
+                }
+            } else if(ct == TOOL_PLAYER) {
+                         high = (ce.c != COLOR_EMPTY) && can_place_player(h.x(), h.y());
             }
 
             if(high) {
-                p.setBrush(COLOR_HOVER);
-                p.setPen(Qt::NoPen);
-                p.drawRoundedRect(re, 9, 9);
+                         p.setBrush(COLOR_HOVER);
+                         p.setPen(Qt::NoPen);
+                         p.drawRoundedRect(re, 9, 9);
             }
         }
     }
@@ -317,6 +391,7 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         return;
     }
 
+    play_click();
     Cell &cell = cells[y][x];
     if(ct == TOOL_FIELD) {
         if(p_p == QPoint(x, y)) {
@@ -325,7 +400,11 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
                 cell.c  = COLOR_FIELD;
                 lc = QPoint(-1, -1);
                 update();
-            } else if (cell.ti == TYPE_FIELD) {
+            } else if(cell.ti == TYPE_FIELD) {
+                if(!is_connected_after_addition(x,y,TYPE_ENEMY)) {
+                    return;
+                }
+
                 cell.ti = TYPE_ENEMY;
                 lc = QPoint(-1, -1);
                 update();
@@ -359,6 +438,8 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
                 fcp = false;
             }
 
+            update();
+
 
             return;
         }
@@ -372,6 +453,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
 
         if(cell.c == COLOR_EMPTY) {
             if(!fcp) {
+                if(!is_connected_after_addition(x,y,TYPE_FIELD)) {
+                    return;
+                }
+
                 cell.c  = COLOR_FIELD;
                 cell.ti = TYPE_FIELD;
                 fcp = true;
@@ -381,15 +466,20 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
             }
 
             bool hn = false;
-            if((y > 0   && cells[y-1][x].c != COLOR_EMPTY) ||
-                (y < r-1 && cells[y+1][x].c != COLOR_EMPTY) ||
-                (x > 0   && cells[y][x-1].c != COLOR_EMPTY) ||
-                (x < c-1 && cells[y][x+1].c != COLOR_EMPTY)) {
-                hn = true;
+            if(  (y > 0   && cells[y-1][x].c != COLOR_EMPTY) ||
+                 (y < r-1 && cells[y+1][x].c != COLOR_EMPTY) ||
+                 (x > 0   && cells[y][x-1].c != COLOR_EMPTY) ||
+                 (x < c-1 && cells[y][x+1].c != COLOR_EMPTY)) {
+                  hn = true;
             }
 
             if(hn) {
-                cell.c = COLOR_FIELD; cell.ti = TYPE_FIELD;
+                if(!is_connected_after_addition(x,y,TYPE_FIELD)) {
+                    return;
+                }
+
+                cell.c  = COLOR_FIELD;
+                cell.ti = TYPE_FIELD;
             }
 
 
@@ -397,6 +487,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if(cell.ti == TYPE_FIELD) {
+            if(!is_connected_after_addition(x,y,TYPE_ENEMY)) {
+                return;
+            }
+
             cell.ti = TYPE_ENEMY;
 
 
@@ -444,6 +538,10 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if(cell.ti == TYPE_ENEMY || cell.ti == TYPE_FIELD) {
+            if(!is_connected_after_addition(x,y,TYPE_FLAG)) {
+                return;
+            }
+
             cell.ti = TYPE_FLAG;
             if(lc == QPoint(x, y)) {
                 lc = {-1, -1};
@@ -475,8 +573,12 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if(cell.ti == TYPE_ENEMY || cell.ti == TYPE_FIELD) {
-                p_p = QPoint(x, y);
-                lc  = QPoint(-1, -1);
+            if(!can_place_player(x, y)) {
+                return;
+            }
+
+            p_p = QPoint(x, y);
+            lc  = QPoint(-1, -1);
             update();
 
 
@@ -484,9 +586,13 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
         }
 
         if(cell.ti == TYPE_FLAG) {
+            if(!can_place_player(x, y)) {
+                return;
+            }
+
             cell.ti = TYPE_FIELD;
-                p_p = QPoint(x, y);
-                lc  = QPoint(-1, -1);
+            p_p = QPoint(x, y);
+            lc  = QPoint(-1, -1);
             update();
 
 
@@ -498,50 +604,44 @@ void GameFieldWidget::handle_click(int16_t x, int16_t y)
     }
 }
 
-bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
+bool GameFieldWidget::can_place_player(int16_t px, int16_t py)
 {
-    if (p_p == QPoint(rx, ry)) {
+    if(px < 0 || px >= c || py < 0 || py >= r) {
         return false;
     }
 
-    QColor  old_c       = cells[ry][rx].c;
-    int32_t old_ti      = cells[ry][rx].ti;
-    cells[ry][rx].c     = COLOR_EMPTY;
-    cells[ry][rx].ti    = TYPE_NONE;
-    QPoint sta(-1, -1);
-    int32_t y, x, count = 0, i, nx, ny, tot = 0;
-    std::queue<QPoint> q;
-    for(    y = 0; y < r; ++y) {
-        for(x = 0; x < c; ++x) {
-            if(cells[y][x].c != COLOR_EMPTY) {
-                sta = QPoint(x, y);
-
-
-                break;
-            }
-        }
-
-        if(sta != QPoint(-1, -1)) {
-            break;
-        }
+    if(cells[py][px].c == COLOR_EMPTY) {
+        return false;
     }
 
-    if(sta == QPoint(-1, -1)) {
+    auto passa = [&](int x, int y)->bool {
+        const Cell &cc = cells[y][x];
+        if(cc.c == COLOR_EMPTY) {
+            return false;
+        }
+
+        if(cc.ti == TYPE_FLAG)  {
+            return false;
+        }
+
+
         return true;
-    }
+    };
 
     std::vector<std::vector<bool>> visit(r, std::vector<bool>(c, false));
+    std::queue<QPoint> q;
+    QPoint sta(px, py), cur;
     q.push(sta);
-    visit[sta.y()][sta.x()] = true;
+    visit[py][px] = true;
+    static const int32_t dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
+    int32_t i, nx, ny, y, x;
     while(!q.empty()) {
-        QPoint cur = q.front(); q.pop();
-        ++count;
-        static const int32_t dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
-        for(i = 0; i < 4; ++i) {
-            nx = cur.x() + dx[i];
-            ny = cur.y() + dy[i];
-            if(nx >= 0 && nx < c && ny >= 0 && ny < r) {
-                if(!visit.at(ny).at(nx) && cells[ny][nx].c != COLOR_EMPTY) {
+        cur = q.front(); q.pop();
+        for(            i = 0; i < 4; ++i) {
+                        nx = cur.x() + dx[i];
+                        ny = cur.y() + dy[i];
+            if(         nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                if(!visit[ny][nx] && passa(nx, ny)) {
                     visit[ny][nx] = true;
                     q.push(QPoint(nx, ny));
                 }
@@ -549,10 +649,134 @@ bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
         }
     }
 
-    for(    y = 0; y < r; ++y) {
-        for(x = 0; x < c; ++x) {
-            if(!(x == rx && y == ry) && cells[y][x].c != COLOR_EMPTY) {
-                ++tot;
+    for(                y = 0; y < r; ++y) {
+        for(            x = 0; x < c; ++x) {
+            if(cells[y][x].ti == TYPE_ENEMY) {
+                if(!visit[y][x]) {
+                    return false;
+                }
+            }
+        }
+    }
+
+    for(                y = 0; y < r; ++y) {
+        for(            x = 0; x < c; ++x) {
+            if(cells[y][x].ti == TYPE_FLAG) {
+                bool reach = false;
+                for(    i = 0; i < 4; ++i) {
+                        nx = x + dx[i], ny = y + dy[i];
+                    if( nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                        if(visit[ny][nx]) {
+                            reach = true;
+
+
+                            break;
+                        }
+                    }
+                }
+
+                if(!reach) {
+                    return false;
+                }
+            }
+        }
+    }
+
+
+    return true;
+}
+
+bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
+{
+    if(p_p == QPoint(rx, ry)) {
+        return false;
+    }
+
+    QColor    old_c  = cells[ry][rx].c;
+    int32_t   old_ti = cells[ry][rx].ti, i, nx, ny, y, x;
+    cells[ry][rx].c  = COLOR_EMPTY;
+    cells[ry][rx].ti = TYPE_NONE;
+    QPoint       sta = find_player();
+    if( sta == QPoint(-1, -1)) {
+        cells[ry][rx].c  = old_c;
+        cells[ry][rx].ti = old_ti;
+
+
+        return true;
+    }
+
+    auto passa = [&](int x, int y)->bool {
+        const Cell &cc = cells[y][x];
+        if(cc.c == COLOR_EMPTY) {
+            return false;
+        }
+
+        if(cc.ti == TYPE_FLAG)  {
+            return false;
+        }
+
+
+        return true;
+    };
+
+    std::vector<std::vector<bool>> visit(r, std::vector<bool>(c, false));
+    std::queue<QPoint> q;
+    q.push(sta);
+    visit[sta.y()][sta.x()] = true;
+    static const int32_t dx[4] = {1, -1, 0, 0}, dy[4] = {0, 0, 1, -1};
+    while(!q.empty()) {
+        QPoint cur = q.front(); q.pop();
+        for(           i = 0; i < 4       ; ++i) {
+            nx = cur.x() + dx[i];
+            ny = cur.y() + dy[i];
+            if(nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                if(!visit[ny][nx] && passa(nx, ny)) {
+                    visit[ny][nx] = true;
+                    q.push(QPoint(nx, ny));
+                }
+            }
+        }
+    }
+
+    bool ok = true;
+    for(                y = 0; y < r && ok; ++y) {
+        for(            x = 0; x < c      ; ++x) {
+            if(cells[y][x].ti == TYPE_ENEMY) {
+                if(x == rx && y == ry) {
+                    continue;
+                }
+
+                if(!visit[y][x]) {
+                    ok = false; break;
+                }
+            }
+        }
+    }
+
+    if(ok) {
+        for(            y = 0; y < r && ok; ++y) {
+            for(        x = 0; x < c      ; ++x) {
+                if(cells[y][x].ti == TYPE_FLAG)   {
+                    bool reach = false;
+                    for(i = 0; i < 4       ; ++i) {
+                        nx = x + dx[i], ny = y + dy[i];
+                        if(nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                            if(visit[ny][nx]) {
+                                reach = true;
+
+
+                                break;
+                            }
+                        }
+                    }
+
+                    if(!reach) {
+                        ok = false;
+
+
+                        break;
+                    }
+                }
             }
         }
     }
@@ -561,7 +785,123 @@ bool GameFieldWidget::is_connected_after_removal(int16_t rx, int16_t ry)
     cells[ry][rx].ti = old_ti;
 
 
-    return count == tot;
+    return ok;
+}
+
+bool GameFieldWidget::is_connected_after_addition(int16_t ax, int16_t ay, int32_t nt)
+{
+    QColor    old_c  = cells[ay][ax].c;
+    int32_t   old_ti = cells[ay][ax].ti, y, x, i, nx, ny, k, sx, sy;
+    cells[ay][ax].ti = nt;
+    cells[ay][ax].c  = COLOR_FIELD;
+    QPoint       sta = find_player(), cur;
+    bool          ok = true, reach = false;
+    if(sta == QPoint(-1, -1)) {
+        for(    y = 0; y < r && sta == QPoint(-1,-1); ++y) {
+            for(x = 0; x < c; ++x) {
+                if(cells[y][x].c != COLOR_EMPTY) {
+                    sta = QPoint(x,y);
+
+
+                    break;
+                }
+            }
+
+            if( sta == QPoint(-1,-1)) {
+                cells[ay][ax].c  = old_c;
+                cells[ay][ax].ti = old_ti;
+
+
+                return true;
+            }
+        }
+    }
+
+    QVector<QPoint> enem;
+    for(        y = 0; y < r; ++y)
+        for(    x = 0; x < c; ++x)
+            if( cells[y][x].ti == TYPE_ENEMY) {
+                enem.push_back(QPoint(x,y));
+            }
+
+    if(enem.isEmpty()) {
+        if(nt != TYPE_FLAG) {
+            cells[ay][ax].c  = old_c;
+            cells[ay][ax].ti = old_ti;
+
+
+            return true;
+        }
+    }
+
+    auto passa = [&](int32_t x, int32_t y)->bool {
+        const Cell &cc = cells[y][x];
+        if(cc.c == COLOR_EMPTY) {
+            return false;
+        }
+
+        if(cc.ti == TYPE_FLAG)  {
+            return false;
+        }
+
+
+        return true;
+    };
+
+    std::vector<std::vector<bool>> visit(r, std::vector<bool>(c,false));
+    std::queue<QPoint> q;
+    q.push(sta);
+    visit[sta.y()][sta.x()] = true;
+    while(!q.empty()) {
+        cur = q.front(); q.pop();
+        static const int dx[4]={1, -1, 0, 0}, dy[4]={0, 0, 1, -1};
+        for(    i = 0; i < 4; ++i) {
+                nx = cur.x()+dx[i];
+                ny = cur.y()+dy[i];
+            if( nx >= 0 && nx < c && ny >= 0 && ny < r) {
+                if(!visit[ny][nx] && passa(nx, ny)) {
+                    visit[ny][nx] = true;
+                    q.push(QPoint(nx, ny));
+                }
+            }
+        }
+    }
+
+    for(const QPoint &e : enem) {
+        if(     !visit[e.y()][e.x()]) {
+                ok = false;
+
+
+            break;
+        }
+    }
+
+    if(ok && nt == TYPE_FLAG) {
+        static const int32_t ddx[4] = {1, -1, 0, 0}, ddy[4] = {0, 0, 1, -1};
+        reach = false;
+        for(    k = 0; k < 4; ++k) {
+                sx = ax + ddx[k];
+                sy = ay + ddy[k];
+            if( sx >= 0 && sx < c && sy >= 0 && sy < r) {
+                if(visit[sy][sx]) {
+                    reach = true;
+
+
+                    break;
+                }
+            }
+        }
+
+        if(!reach) {
+            ok = false;
+        }
+    }
+
+    cells[ay][ax].c  = old_c;
+    cells[ay][ax].ti = old_ti;
+
+
+    return ok;
 }
 
 std::vector<QPoint> GameFieldWidget::find_shortest_path(QPoint sta, QPoint goal)
@@ -649,6 +989,7 @@ void GameFieldWidget::move_player(int32_t dx, int32_t dy)
     }
 
     p_p = QPoint(nx, ny);
+    play_move();
     update();
 }
 
@@ -672,6 +1013,7 @@ bool GameFieldWidget::move_player_step(int32_t dx, int32_t dy)
     }
 
     p_p = QPoint(nx, ny);
+    play_move();
     if(cells[ny][nx].ti == TYPE_FLAG) {
         cells[ny][nx].ti = TYPE_FIELD;
         update();
@@ -716,4 +1058,48 @@ void GameFieldWidget::remove_enemy_under_player()
         cell.c  = COLOR_PAINT;
         update();
     }
+}
+
+void GameFieldWidget::play_sound(QMediaPlayer *s)
+{
+    if(s->playbackState() == QMediaPlayer::PlayingState) {
+        s->stop();
+    }
+
+    s->play();
+}
+
+void GameFieldWidget::play_click()
+{
+    play_sound(cs);
+}
+
+void GameFieldWidget::play_move()
+{
+    play_sound(ms);
+}
+
+QPoint GameFieldWidget::find_nearest_flag() const
+{
+    QPoint p = find_player();
+    if(p == QPoint(-1, -1)) {
+        return QPoint(-1, -1);
+    }
+
+    QPoint          n(-1, -1);
+    int32_t         bd = std::numeric_limits<int>::max(), y, x, d;
+    for(            y = 0; y < r; ++y) {
+        for(        x = 0; x < c; ++x) {
+            if(     cells[y][x].ti == TYPE_FLAG) {
+                    d = std::abs(p.x() - x) + std::abs(p.y() - y);
+                if( d < bd) {
+                    bd = d;
+                    n = QPoint(x, y);
+                }
+            }
+        }
+    }
+
+
+    return n;
 }

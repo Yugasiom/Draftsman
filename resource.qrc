@@ -12,5 +12,11 @@
         <file>source/icon/pause.png</file>
         <file>source/icon/reset.png</file>
     </qresource>
+    <qresource prefix="/sound">
+        <file>source/sound/move.wav</file>
+        <file>source/sound/click.wav</file>
+    </qresource>
 </RCC>
+
+
 
