@@ -1,13 +1,6 @@
 #!/bin/sh
 HERE="$(dirname "$(readlink -f "$0")")"
-export LD_LIBRARY_PATH="$HERE/usr/lib:$LD_LIBRARY_PATH"
-export QT_PLUGIN_PATH="$HERE/usr/plugins"
-export QML2_IMPORT_PATH="$HERE/usr/qml"
-export QML_IMPORT_PATH="$HERE/usr/qml"
-export QT_QUICK_CONTROLS_STYLE=Fusion
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_CONFIG_HOME="$HOME/.config"
-exec "$HERE/usr/bin/Draftsman" "$@"
-
-
-
+export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+export QT_PLUGIN_PATH="${HERE}/usr/lib/plugins"
+export QT_DEBUG_PLUGINS=1
+exec "${HERE}/usr/bin/Draftsman" "$@"
